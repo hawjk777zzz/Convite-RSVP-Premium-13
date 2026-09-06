@@ -1,12 +1,12 @@
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Redirect, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import { ClerkProvider, SignIn, SignUp, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import {
-  Archive, ArrowRight, BarChart3, CalendarDays, Check, CheckCircle2, Clock3, Copy, ExternalLink,
-  Heart, Image as ImageIcon, LayoutDashboard, Loader2, Mail, MapPin, Menu, MessageCircle, Pencil, Plus, Search,
+  Archive, ArrowRight, BarChart3, CalendarDays, Check, CheckCircle2, ChevronDown, Clock3, Copy, ExternalLink,
+  Heart, Image as ImageIcon, LayoutDashboard, Loader2, Mail, MapPinned, Menu, MessageCircle, Pencil, Plus, Quote, Search, Send,
   Settings, ShieldCheck, Sparkles, Trash2, UserCheck, Users, X, XCircle
 } from 'lucide-react';
 import {
@@ -84,6 +84,43 @@ function AdminShell({ children, title, eyebrow }: { children: ReactNode; title: 
   </div>;
 }
 
+function PublicReveal({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (!('IntersectionObserver' in window)) { setVisible(true); return undefined; }
+    const element = ref.current;
+    if (!element) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); observer.disconnect(); }
+    }, { threshold: 0.12 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  return <div ref={ref} className={`public-reveal ${visible ? 'is-visible' : ''} ${className}`}>{children}</div>;
+}
+
+function AnniversaryCountdown({ target }: { target: string }) {
+  const calculate = () => {
+    const difference = Math.max(0, new Date(target).getTime() - Date.now());
+    const totalSeconds = Math.floor(difference / 1000);
+    return {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    };
+  };
+  const [remaining, setRemaining] = useState(calculate);
+  useEffect(() => {
+    const timer = window.setInterval(() => setRemaining(calculate()), 1000);
+    return () => window.clearInterval(timer);
+  }, [target]);
+  return <div className="public-countdown" data-testid="countdown-event">
+    {([{ key: 'days', label: 'Dias' }, { key: 'hours', label: 'Horas' }, { key: 'minutes', label: 'Minutos' }, { key: 'seconds', label: 'Segundos' }] as const).map(({ key, label }) => <div className="public-countdown-item" key={key} data-testid={`countdown-${key}`}><span className="public-countdown-number">{String(remaining[key]).padStart(2, '0')}</span><span className="public-countdown-label">{label}</span></div>)}
+  </div>;
+}
+
 function Invitation({ token }: { token: string }) {
   const eventQuery = useGetEvent({ query: { queryKey: getGetEventQueryKey() } });
   const inviteQuery = useGetInvite(token, { query: { queryKey: getGetInviteQueryKey(token) } });
@@ -99,33 +136,95 @@ function Invitation({ token }: { token: string }) {
   const [messageAuthor, setMessageAuthor] = useState('');
   const event = eventQuery.data;
   const invite = inviteQuery.data;
-  const participants = useMemo(() => names.length ? names.map((name) => ({ name, kind: 'guest' })) : (invite?.participants || []), [names, invite?.participants]);
-  if (eventQuery.isLoading || inviteQuery.isLoading) return <div className="invite-page p-6 md:p-16"><div className="skeleton h-[70vh] w-full opacity-20" /></div>;
-  if (eventQuery.isError || inviteQuery.isError || !event || !invite) return <div className="invite-page grid min-h-dvh place-items-center p-6"><div className="rsvp-card text-center"><Heart className="mx-auto text-[#d6af62]" /><h1 className="serif text-4xl mt-4">Este convite está em pausa</h1><p className="text-white/65 text-sm mt-3">Confira o link recebido ou fale com os anfitriões.</p></div></div>;
+
+  useEffect(() => {
+    if (!rsvpOpen) return undefined;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setRsvpOpen(false); };
+    document.addEventListener('keydown', closeOnEscape);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', closeOnEscape); document.body.style.overflow = previousOverflow; };
+  }, [rsvpOpen]);
+
+  if (eventQuery.isLoading || inviteQuery.isLoading) return <main className="public-invite min-h-dvh p-5 md:p-12" aria-busy="true"><div className="skeleton h-[82vh] w-full opacity-20" /><p className="sr-only">Carregando seu convite</p></main>;
+  if (eventQuery.isError || inviteQuery.isError || !event || !invite) return <main className="public-invite grid min-h-dvh place-items-center p-6"><div className="public-rsvp-shell public-reveal is-visible"><Heart className="mx-auto text-[#e2be74]" size={29} /><h1 className="public-section-heading mx-auto mt-5 text-center">Este convite está em pausa</h1><p className="public-hero-subtitle mx-auto mt-4 text-center">Confira o link recebido ou fale com os anfitriões para receber ajuda.</p><button className="public-rsvp-button" onClick={() => { eventQuery.refetch(); inviteQuery.refetch(); }} data-testid="button-retry-invite">Tentar novamente</button></div></main>;
+
   const date = new Date(event.eventDate);
   const formattedDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  const guestMessage = invite.message || event.message || 'Depois de 50 anos juntos, queremos celebrar esta história ao lado de quem torna a nossa vida mais bonita.';
+  const coupleLabel = `${event.couple.name1} & ${event.couple.name2}`;
   const submitResponse = () => {
-    const finalParticipants: Participant[] = choice === 'declined' ? [] : (names.length ? names.filter(Boolean).map((name, index) => ({ name, kind: index === 0 ? 'titular' : 'guest' })) : [{ name: invite.name, kind: 'titular' }]);
-    respond.mutate({ token, data: { status: choice, participants: finalParticipants, message: note } }, {
-      onSuccess: () => { client.invalidateQueries({ queryKey: getGetInviteQueryKey(token) }); setRsvpOpen(false); notify(choice === 'confirmed' ? 'Presença confirmada. Será uma alegria ter você conosco.' : 'Resposta registrada com carinho.'); }
+    const finalParticipants: Participant[] = choice === 'declined' ? [] : (names.filter(Boolean).map((name, index) => ({ name, kind: index === 0 ? 'titular' : 'guest' })) || [{ name: invite.name, kind: 'titular' }]);
+    const safeParticipants = finalParticipants.length ? finalParticipants : [{ name: invite.name, kind: 'titular' }];
+    respond.mutate({ token, data: { status: choice, participants: choice === 'declined' ? [] : safeParticipants, message: note } }, {
+      onSuccess: () => { client.invalidateQueries({ queryKey: getGetInviteQueryKey(token) }); setRsvpOpen(false); notify(choice === 'confirmed' ? 'Presença confirmada. Será uma alegria ter você conosco.' : 'Resposta registrada com carinho.'); },
+      onError: () => notify('Não conseguimos salvar agora. Tente novamente em instantes.'),
     });
   };
-   return <div className="invite-page noise">
-    <section className="invite-hero">
-      <img className="invite-hero-img" src={event.heroImage} alt={`${event.couple.name1} e ${event.couple.name2}`} data-testid="img-invite-hero" />
-       <div className="invite-hero-content fade-up"><div className="invite-kicker">Bodas de Ouro · 50 anos de uma história</div><h1 className="invite-title">{event.couple.name1}<br /><i>&</i> {event.couple.name2}</h1><div className="invite-date"><span />{formattedDate} · {event.eventTime}<span /></div><p className="mt-7 text-white/75 max-w-md text-sm leading-relaxed">Este convite foi preparado especialmente para <strong className="text-[#f5dfb1]">{invite.name}</strong>.</p></div>
-      <div className="invite-scroll">Deslize para descobrir</div>
+
+  return <main className="public-invite noise" data-testid="public-invitation">
+    <a className="public-skip" href="#public-rsvp">Ir para confirmação de presença</a>
+    <nav className="public-nav" aria-label="Navegação do convite">
+      <a className="public-brand" href="#inicio" data-testid="link-invite-home"><span className="public-brand-mark">C</span><span className="public-brand-copy">Convite · 50 anos</span></a>
+      <div className="public-nav-links"><a href="#historia" data-testid="link-invite-story">Nossa história</a><a href="#celebracao" data-testid="link-invite-celebration">A celebração</a><a className="public-nav-rsvp" href="#public-rsvp" data-testid="link-invite-rsvp">RSVP <ArrowRight size={13} /></a></div>
+    </nav>
+
+    <section className="public-hero" id="inicio" data-testid="section-invite-hero">
+      <img className="public-hero-image" src={event.heroImage} alt={`${coupleLabel}, retrato do casal`} data-testid="img-invite-hero" />
+      <div className="public-hero-grid">
+        <div className="public-hero-copy fade-up">
+          <div className="public-kicker">Uma celebração de ouro · 1974—2024</div>
+          <h1 className="public-hero-title">{event.couple.name1}<br /><em>&</em> {event.couple.name2}</h1>
+          <p className="public-hero-subtitle">Uma vida inteira escolhendo um ao outro, agora reunida para celebrar ao lado de quem faz parte desta história.</p>
+          <div className="public-hero-meta">{formattedDate} · {event.eventTime}</div>
+        </div>
+        <aside className="public-hero-card fade-up d2" aria-label="Mensagem personalizada">
+          <div className="public-hero-card-label">Uma carta para</div>
+          <strong>{invite.name}</strong>
+          <p>Este convite foi guardado especialmente para você.</p>
+        </aside>
+      </div>
+      <a className="public-scroll-cue" href="#abertura" aria-label="Descer para a celebração"><ChevronDown size={14} /> Descubra</a>
     </section>
-     <section className="invite-section cream"><div className="invite-container grid md:grid-cols-[1fr_1.25fr] gap-14 items-center"><div><div className="eyebrow">Uma carta para você</div><h2 className="invite-section-title mt-4">Uma vida inteira compartilhada.</h2><div className="invite-rule" /></div><div className="text-lg leading-relaxed text-[#4b394a]"><p>{event.message || 'Depois de 50 anos juntos, queremos celebrar esta história ao lado de quem torna a nossa vida mais bonita.'}</p><div className="mt-8 flex items-center gap-3"><div className="avatar" style={{ background: '#ddc18b', color: '#3b2a3d' }}>{initials(event.couple.name1 + ' ' + event.couple.name2)}</div><span className="serif italic text-xl">{event.couple.name1} & {event.couple.name2}</span></div></div></div></section>
-     <section className="invite-section"><div className="invite-container"><div className="eyebrow text-[#d6af62]">A celebração</div><h2 className="invite-section-title mt-4">{event.venue}</h2><div className="grid md:grid-cols-3 gap-8 mt-12"><div><CalendarDays className="text-[#d6af62] mb-4" size={21} /><div className="text-sm text-white/55">Data</div><div className="mt-1">{formattedDate}</div></div><div><Clock3 className="text-[#d6af62] mb-4" size={21} /><div className="text-sm text-white/55">Horário</div><div className="mt-1">{event.eventTime}</div></div><div><MapPin className="text-[#d6af62] mb-4" size={21} /><div className="text-sm text-white/55">Onde</div><div className="mt-1">{event.address}</div>{event.mapUrl && <a href={event.mapUrl} target="_blank" rel="noreferrer" className="text-[#d6af62] inline-flex items-center gap-1 text-xs mt-3" data-testid="link-map">Abrir mapa <ArrowRight size={12} /></a>}</div></div>{event.dressCode && <div className="mt-16 border border-[#d6af62]/35 p-6 max-w-md"><div className="eyebrow text-[#d6af62]">Traje da celebração</div><div className="serif text-2xl mt-2">{event.dressCode}</div></div>}</div></section>
-     {event.timeline?.length > 0 && <section className="invite-section cream"><div className="invite-container"><div className="eyebrow">Nossa história</div><h2 className="invite-section-title mt-4">Capítulos de uma vida<br />compartilhada.</h2><div className="mt-12">{event.timeline.map((item) => <div className="timeline-item" key={item.id}><div className="timeline-year">{item.year}</div><div><h3 className="serif text-2xl">{item.title}</h3><p className="mt-2 text-[#6c5765] max-w-xl leading-relaxed">{item.description}</p></div></div>)}</div></div></section>}
-    {event.gallery?.length > 0 && <section className="invite-section"><div className="invite-container"><div className="eyebrow text-[#d6af62]">Alguns instantes</div><h2 className="invite-section-title mt-4">Para guardar.</h2><div className="gallery-grid mt-12">{event.gallery.map((image) => <img key={image.id} src={image.imageUrl} alt={image.alt} data-testid={`img-gallery-${image.id}`} />)}</div></div></section>}
-     <section className="invite-section cream"><div className="rsvp-card text-center"><div className="eyebrow">Resposta até 20 de outubro</div><h2 className="invite-section-title mt-4 text-5xl">Você vem celebrar?</h2><p className="text-[#6c5765] mt-4">Sua presença é o presente que mais desejamos.</p><button className="btn btn-primary mt-8 px-8 py-3" onClick={() => { setChoice(invite.status === 'declined' ? 'confirmed' : 'confirmed'); setNames(invite.participants.map((p) => p.name)); setRsvpOpen(true); }} data-testid="button-open-rsvp"><Heart size={15} /> Responder convite</button>{invite.status !== 'pending' && <div className="mt-5 text-xs text-[#6c5765]" data-testid="status-rsvp"><CheckCircle2 size={14} className="inline mr-1 text-[#4a8a69]" /> Sua resposta já foi registrada como <strong>{invite.status === 'confirmed' ? 'confirmada' : 'declinada'}</strong>.</div>}</div></section>
-     <section className="invite-section"><div className="rsvp-card"><div className="eyebrow text-[#d6af62]">Um recado para essa história</div><h2 className="serif text-4xl mt-3">Deixe uma mensagem.</h2><div className="grid md:grid-cols-2 gap-3 mt-7"><input value={messageAuthor} onChange={(e) => setMessageAuthor(e.target.value)} className="field bg-transparent border-white/20 text-white placeholder:text-white/35" placeholder="Seu nome" data-testid="input-message-author" /><textarea value={message} onChange={(e) => setMessage(e.target.value)} className="field bg-transparent border-white/20 text-white placeholder:text-white/35 md:col-span-2 min-h-24" placeholder="Escreva com carinho..." data-testid="input-guest-message" /></div><button className="btn btn-quiet mt-4" disabled={createMessage.isPending || !messageAuthor || !message} onClick={() => createMessage.mutate({ data: { author: messageAuthor, message, token } }, { onSuccess: () => { setMessage(''); setMessageAuthor(''); notify('Mensagem enviada para os anfitriões.'); } })} data-testid="button-send-message">{createMessage.isPending ? <Loader2 className="animate-spin" size={14} /> : <Mail size={14} />} Enviar mensagem</button></div></section>
-    <footer className="p-10 text-center border-t border-white/10 text-white/40 text-xs"><div className="serif text-white/70 text-xl">{event.couple.name1} & {event.couple.name2}</div><div className="mono mt-3 tracking-widest">COM AMOR, SEMPRE</div></footer>
-    {rsvpOpen && <div className="modal-backdrop"><div className="modal" style={{ background: '#f4ecdf', color: '#2c2230' }}><div className="p-6 md:p-8 border-b border-[#d8cbb9] flex justify-between items-start"><div><div className="eyebrow">Sua resposta</div><h2 className="serif text-3xl mt-2">Que bom ter você aqui.</h2></div><button className="btn btn-outline" onClick={() => setRsvpOpen(false)} data-testid="button-close-rsvp"><X size={16} /></button></div><div className="p-6 md:p-8"><div className="space-y-3"><label className={`choice ${choice === 'confirmed' ? 'selected' : ''}`}><input type="radio" checked={choice === 'confirmed'} onChange={() => setChoice('confirmed')} /> <span><strong>Sim, estarei presente</strong><small className="block text-[#6c5765] mt-1">Mal podemos esperar para celebrar juntos.</small></span></label><label className={`choice ${choice === 'declined' ? 'selected' : ''}`}><input type="radio" checked={choice === 'declined'} onChange={() => setChoice('declined')} /> <span><strong>Não poderei comparecer</strong><small className="block text-[#6c5765] mt-1">Agradeço muito o convite.</small></span></label></div>{choice === 'confirmed' && invite.maxPeople > 1 && <div className="mt-6"><label className="label">Nomes de quem vem com você</label>{Array.from({ length: Math.min(invite.maxPeople, 4) }).map((_, index) => <input key={index} value={names[index] || ''} onChange={(e) => setNames((current) => { const next = [...current]; next[index] = e.target.value; return next; })} className="field mb-2" placeholder={index === 0 ? invite.name : `Convidado ${index + 1}`} data-testid={`input-participant-${index}`} />)}</div>}<label className="label mt-4">Uma observação (opcional)<textarea className="field min-h-20" value={note} onChange={(e) => setNote(e.target.value)} data-testid="input-rsvp-note" /></label><button className="btn btn-primary w-full mt-5" disabled={respond.isPending} onClick={submitResponse} data-testid="button-submit-rsvp">{respond.isPending ? <Loader2 className="animate-spin" size={15} /> : <Check size={15} />} Confirmar resposta</button></div></div></div>}
+
+    <section className="public-section public-section--paper" id="abertura" data-testid="section-anniversary-intro">
+      <PublicReveal className="public-section-inner">
+        <div className="public-intro-grid">
+          <div><div className="public-section-kicker">Uma história para celebrar</div><h2 className="public-section-heading">50 anos de uma <em>história.</em></h2><div className="public-rule" /><p className="text-sm leading-relaxed text-[#765e6d] max-w-xs">Algumas histórias não terminam. Elas ganham novos capítulos.</p></div>
+          <div className="public-letter" data-testid="text-personal-message"><Quote size={27} className="mb-5 text-[#b4864d]" strokeWidth={1.2} /><p>{guestMessage}</p><div className="public-signature"><span className="public-signature-mark">{initials(coupleLabel)}</span><span className="serif italic text-lg">{coupleLabel}</span></div></div>
+        </div>
+      </PublicReveal>
+    </section>
+
+    <section className="public-section public-section--wine" data-testid="section-countdown">
+      <PublicReveal className="public-section-inner">
+        <div className="public-countdown-wrap"><div><div className="public-section-kicker">O próximo capítulo</div><h2 className="public-section-heading">Contando os dias para nos encontrarmos.</h2></div><AnniversaryCountdown target={event.eventDate} /></div>
+      </PublicReveal>
+    </section>
+
+    <section className="public-section public-section--paper" id="historia" data-testid="section-our-story">
+      <PublicReveal className="public-section-inner">
+        <div className="public-intro-grid"><figure className="public-portrait"><img src={event.couple.photoUrl || event.heroImage} alt={`Retrato de ${coupleLabel}`} data-testid="img-couple-portrait" /><figcaption>Juntos, sempre</figcaption></figure><div><div className="public-section-kicker">Nossa história</div><h2 className="public-section-heading">O amor mora nos <em>detalhes.</em></h2><div className="public-rule" /><p className="max-w-md text-sm leading-[1.9] text-[#765e6d]">{event.message || 'Entre dias comuns, escolhas corajosas e uma coleção de pequenas alegrias, eles construíram uma vida compartilhada.'}</p><p className="mt-5 max-w-md text-sm leading-[1.9] text-[#765e6d]">É essa memória viva que queremos dividir com você, em uma noite feita de afeto, conversa e reencontros.</p></div></div>
+      </PublicReveal>
+    </section>
+
+    {event.timeline?.length > 0 && <section className="public-section public-section--paper pt-0" data-testid="section-timeline"><PublicReveal className="public-section-inner"><div className="public-section-kicker">Linha do tempo</div><h2 className="public-section-heading">Capítulos que nos trouxeram até aqui.</h2><div className="public-timeline">{event.timeline.map((item) => <article className="public-timeline-item" key={item.id} data-testid={`timeline-item-${item.id}`}><div className="public-timeline-year">{item.year}</div><div className="public-timeline-content"><h3 className="public-timeline-title">{item.title}</h3><p className="public-timeline-copy">{item.description}</p>{item.photoUrl && <img className="mt-4 h-28 w-44 object-cover" src={item.photoUrl} alt="" />}</div></article>)}</div></PublicReveal></section>}
+
+    {event.gallery?.length > 0 && <section className="public-section public-section--plum" data-testid="section-gallery"><PublicReveal className="public-section-inner"><div className="public-gallery-intro"><div><div className="public-section-kicker">Alguns instantes</div><h2 className="public-section-heading">Memórias para <em>guardar.</em></h2></div><p className="public-gallery-note">Um pequeno álbum de dias que continuam presentes na forma como eles olham um para o outro.</p></div><div className="public-gallery">{event.gallery.map((image) => <figure key={image.id} data-testid={`gallery-item-${image.id}`}><img src={image.imageUrl} alt={image.alt} data-testid={`img-gallery-${image.id}`} /><figcaption>{image.alt}</figcaption></figure>)}</div></PublicReveal></section>}
+
+    <section className="public-section public-section--plum" id="celebracao" data-testid="section-celebration-details">
+      <PublicReveal className="public-section-inner"><div className="public-section-kicker">A celebração</div><h2 className="public-section-heading">{event.venue}</h2><p className="public-hero-subtitle mt-5 max-w-md">Uma noite para brindar ao tempo, às escolhas e a todos os encontros que fizeram parte do caminho.</p><div className="public-location-grid"><div className="public-detail"><CalendarDays size={18} className="mb-4 text-[#e2be74]" /><div className="public-detail-label">Quando</div><div className="public-detail-value">{formattedDate}</div><div className="public-detail-copy">{event.eventTime}</div></div><div className="public-detail"><MapPinned size={18} className="mb-4 text-[#e2be74]" /><div className="public-detail-label">Onde</div><div className="public-detail-value">{event.address}</div>{event.mapUrl && <a href={event.mapUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-[#e2be74]" data-testid="link-map">Abrir mapa <ArrowRight size={12} /></a>}</div></div>{event.dressCode && <div className="mt-9 flex items-center gap-3 text-xs text-white/65"><Sparkles size={16} className="text-[#e2be74]" /><span>Traje sugerido: <strong className="font-medium text-[#f7dda6]">{event.dressCode}</strong></span></div>}</PublicReveal>
+    </section>
+
+    <section className="public-section public-section--paper" id="public-rsvp" data-testid="section-rsvp"><PublicReveal className="public-rsvp-shell"><div className="public-section-kicker">Sua presença faz parte</div><h2 className="public-section-heading mx-auto mt-4">Você vem celebrar com a gente?</h2><div className="public-rule" /><p className="public-rsvp-copy">Sua presença é o presente que mais desejamos. Confirme com calma — e conte quem estará com você.</p><button className="public-rsvp-button" onClick={() => { setChoice('confirmed'); setNames(invite.participants.map((participant) => participant.name)); setRsvpOpen(true); }} data-testid="button-open-rsvp"><Heart size={14} /> Responder convite</button>{invite.status !== 'pending' && <div className="public-rsvp-status" data-testid="status-rsvp"><CheckCircle2 size={14} className="text-[#4a8a69]" /> Sua resposta já foi registrada como <strong>{invite.status === 'confirmed' ? 'confirmada' : 'declinada'}</strong>.</div>}</PublicReveal></section>
+
+    <section className="public-section public-section--wine" data-testid="section-guest-message"><PublicReveal className="public-section-inner public-message-shell"><div><div className="public-section-kicker">Um recado para essa história</div><h2 className="public-section-heading mt-4">Deixe uma mensagem para os anfitriões.</h2><p className="mt-5 max-w-xs text-sm leading-relaxed text-white/60">Palavras simples também viram lembrança. Escreva algo que vocês possam guardar.</p></div><form className="public-message-form" onSubmit={(eventForm) => { eventForm.preventDefault(); if (!messageAuthor || !message) return; createMessage.mutate({ data: { author: messageAuthor, message, token } }, { onSuccess: () => { setMessage(''); setMessageAuthor(''); notify('Mensagem enviada para os anfitriões.'); }, onError: () => notify('Não conseguimos enviar sua mensagem agora.') }); }}><input value={messageAuthor} onChange={(eventInput) => setMessageAuthor(eventInput.target.value)} className="field" placeholder="Seu nome" aria-label="Seu nome" data-testid="input-message-author" /><textarea value={message} onChange={(eventInput) => setMessage(eventInput.target.value)} className="field" placeholder="Escreva com carinho..." aria-label="Sua mensagem" data-testid="input-guest-message" /><button type="submit" disabled={createMessage.isPending || !messageAuthor.trim() || !message.trim()} data-testid="button-send-message">{createMessage.isPending ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />} Enviar mensagem</button></form></PublicReveal></section>
+
+    <footer className="public-footer"><div className="public-footer-names">{coupleLabel}</div><div className="public-footer-note">Com amor, sempre · 50 anos</div></footer>
+
+    {rsvpOpen && <div className="public-modal-backdrop" role="presentation" onMouseDown={(eventModal) => { if (eventModal.target === eventModal.currentTarget) setRsvpOpen(false); }}><div className="public-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title"><div className="public-modal-head"><div><div className="public-section-kicker">Sua resposta</div><h2 id="rsvp-title">Que bom ter você aqui.</h2></div><button className="public-modal-close" onClick={() => setRsvpOpen(false)} aria-label="Fechar confirmação" data-testid="button-close-rsvp"><X size={16} /></button></div><div className="public-modal-body"><div><label className={`public-choice ${choice === 'confirmed' ? 'selected' : ''}`}><input type="radio" name="rsvp-choice" checked={choice === 'confirmed'} onChange={() => setChoice('confirmed')} /><span><strong>Sim, estarei presente</strong><small className="block mt-1 text-[#765e6d]">Mal podemos esperar para celebrar juntos.</small></span></label><label className={`public-choice ${choice === 'declined' ? 'selected' : ''}`}><input type="radio" name="rsvp-choice" checked={choice === 'declined'} onChange={() => setChoice('declined')} /><span><strong>Não poderei comparecer</strong><small className="block mt-1 text-[#765e6d]">Agradeço muito o convite e desejo uma noite linda.</small></span></label></div>{choice === 'confirmed' && invite.maxPeople > 1 && <div className="mt-6"><label className="label">Nomes de quem vem com você</label>{Array.from({ length: Math.min(invite.maxPeople, 4) }).map((_, index) => <input key={index} value={names[index] || ''} onChange={(eventInput) => setNames((current) => { const next = [...current]; next[index] = eventInput.target.value; return next; })} className="field mb-2" placeholder={index === 0 ? invite.name : `Convidado ${index + 1}`} data-testid={`input-participant-${index}`} />)}</div>}<label className="label mt-5">Uma observação (opcional)<textarea className="field min-h-20" value={note} onChange={(eventInput) => setNote(eventInput.target.value)} data-testid="input-rsvp-note" /></label><button className="public-modal-submit" disabled={respond.isPending} onClick={submitResponse} data-testid="button-submit-rsvp">{respond.isPending ? <Loader2 className="mx-auto animate-spin" size={15} /> : <><Check size={15} className="inline mr-2" /> Confirmar resposta</>}</button></div></div></div>}
     <Flash message={flash} />
-  </div>;
+  </main>;
 }
 
 function Dashboard() {

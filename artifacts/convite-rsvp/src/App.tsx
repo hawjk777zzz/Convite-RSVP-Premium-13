@@ -223,11 +223,12 @@ function Invitation({ token }: { token: string }) {
           <p className="public-hero-subtitle">Uma vida inteira escolhendo um ao outro, agora reunida para celebrar ao lado de quem faz parte desta história.</p>
           <div className="public-hero-meta">{formattedDate} · {event.eventTime}</div>
         </div>
-         <aside className="public-hero-card fade-up d2" aria-label="Mensagem personalizada">
+           <aside className="public-hero-card fade-up d2" aria-label="Mensagem personalizada">
           <div className="public-hero-card-label">Uma carta para</div>
           <strong>{invite.name}</strong>
           <p>Este convite foi guardado especialmente para você.</p>
            {invite.type !== 'individual' && invite.allowCompanions && invite.maxPeople > 1 && <div className="mt-4 border-t border-[#e2be74]/30 pt-4" data-testid="text-invite-composition"><div className="public-hero-card-label">Com você</div>{invite.companions?.length ? <div className="mt-2 space-y-1">{invite.companions.map((companion, index) => <div key={`hero-companion-${index}`} className="text-xs text-[#f5dfb1]" data-testid={`text-hero-companion-${index}`}>{companion.name || 'Acompanhante ainda não definido'} <span className="text-[10px] text-white/55">· {companion.relation || 'Acompanhante'}</span></div>)}</div> : <div className="mt-2 text-xs text-[#f5dfb1]">{invite.maxPeople - 1} vagas de acompanhante disponíveis</div>}</div>}
+            <button type="button" className="public-hero-card-cta" onClick={openRsvp} data-testid="button-hero-rsvp">Confirmar presença <ArrowRight size={13} /></button>
         </aside>
       </div>
       <a className="public-scroll-cue" href="#abertura" aria-label="Descer para a celebração"><ChevronDown size={14} /> Descubra</a>

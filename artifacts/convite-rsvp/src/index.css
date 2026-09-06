@@ -200,6 +200,15 @@ button { cursor: pointer; }
 .public-reveal { opacity: 0; transform: translateY(22px); transition: opacity .8s ease, transform .8s cubic-bezier(.22,.8,.28,1); }
 .public-reveal.is-visible { opacity: 1; transform: translateY(0); }
 .public-modal-backdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(24,13,23,.76); backdrop-filter: blur(9px); }
+.public-welcome-backdrop { z-index: 100; }
+.public-welcome-card { width: min(460px, 100%); border: 1px solid #d8b770; border-radius: 2px; padding: 38px 32px 32px; background: #f4ecdf; color: #302331; box-shadow: 0 25px 70px rgba(18,8,17,.42); text-align: center; }
+.public-welcome-card h2 { margin: 12px 0 0; color: #302331; font-family: var(--app-font-serif); font-size: clamp(40px, 9vw, 58px); font-weight: 500; line-height: .95; }
+.public-welcome-rule { width: 63px; height: 1px; margin: 24px auto; background: #b4864d; }
+.public-welcome-card p { max-width: 320px; margin: 0 auto; color: #6b5664; font-family: var(--app-font-serif); font-size: 22px; line-height: 1.35; }
+.public-welcome-actions { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.public-welcome-actions .public-rsvp-button { display: inline-flex; align-items: center; gap: 8px; margin-top: 28px; }
+.public-welcome-link { border: 0; padding: 0; background: transparent; color: #9b6b40; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; }
+.public-welcome-link:hover { color: #302331; }
 .public-modal { width: min(570px, 100%); max-height: min(720px, 92dvh); overflow: auto; border: 1px solid #d8b770; border-radius: 2px; background: #f4ecdf; color: #302331; box-shadow: 0 25px 70px rgba(18,8,17,.35); }
 .public-modal-head { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding: 27px 27px 22px; border-bottom: 1px solid #d9cbb9; }
 .public-modal-head h2 { margin: 7px 0 0; font-family: var(--app-font-serif); font-size: 33px; font-weight: 500; line-height: 1; }

@@ -64,6 +64,11 @@ export interface Participant {
   kind: string;
 }
 
+export interface Companion {
+  name: string;
+  relation: string;
+}
+
 export type InviteType = typeof InviteType[keyof typeof InviteType];
 
 
@@ -90,8 +95,10 @@ export interface Invite {
   maxPeople: number;
   allowCompanions?: boolean;
   companionTypes?: string[];
+  companions: Companion[];
   /** @nullable */
   phone?: string | null;
+  internalNotes: string;
   status: InviteStatus;
   /** @nullable */
   respondedAt?: string | null;
@@ -121,7 +128,9 @@ export interface InviteInput {
   maxPeople: number;
   allowCompanions: boolean;
   companionTypes?: string[];
+  companions?: Companion[];
   phone?: string;
+  internalNotes?: string;
 }
 
 export interface InviteUpdate {
@@ -133,7 +142,10 @@ export interface InviteUpdate {
      */
   maxPeople?: number;
   allowCompanions?: boolean;
+  companionTypes?: string[];
+  companions?: Companion[];
   phone?: string;
+  internalNotes?: string;
 }
 
 export type InviteResponseInputStatus = typeof InviteResponseInputStatus[keyof typeof InviteResponseInputStatus];

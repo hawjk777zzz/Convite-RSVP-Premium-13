@@ -71,7 +71,9 @@ const demoInvites = [
     maxPeople: 2,
     allowCompanions: true,
     companionTypes: ["spouse", "family"],
+    companions: [{ name: "Maria Silva", relation: "esposa" }],
     phone: "(11) 99999-1122",
+    internalNotes: "Casal amigo dos anfitriões.",
     status: "confirmed",
     participants: [
       { name: "João Silva", kind: "Convidado principal" },
@@ -86,7 +88,13 @@ const demoInvites = [
     maxPeople: 4,
     allowCompanions: true,
     companionTypes: ["family", "child"],
+    companions: [
+      { name: "Maria Silva", relation: "esposa" },
+      { name: "Pedro Silva", relation: "filho" },
+      { name: "Ana Silva", relation: "filha" },
+    ],
     phone: "(11) 98888-2211",
+    internalNotes: "",
     status: "pending",
     participants: [],
     message: null,
@@ -98,7 +106,9 @@ const demoInvites = [
     maxPeople: 1,
     allowCompanions: false,
     companionTypes: [],
+    companions: [],
     phone: "(21) 97777-3344",
+    internalNotes: "",
     status: "declined",
     participants: [],
     message: "Desejo muitos anos de felicidade para vocês.",
@@ -110,7 +120,9 @@ const demoInvites = [
     maxPeople: 1,
     allowCompanions: false,
     companionTypes: [],
+    companions: [],
     phone: null,
+    internalNotes: "",
     status: "pending",
     participants: [],
     message: null,
@@ -177,7 +189,9 @@ function normalizeInvite(invite: typeof invitesTable.$inferSelect) {
     maxPeople: invite.maxPeople,
     allowCompanions: invite.allowCompanions,
     companionTypes: invite.companionTypes,
+    companions: invite.companions,
     phone: invite.phone,
+    internalNotes: invite.internalNotes,
     status: invite.status,
     respondedAt: invite.respondedAt?.toISOString() ?? null,
     message: invite.message,
@@ -256,10 +270,23 @@ router.post("/invites", requireOrganizer, async (req, res, next) => {
   try {
     await ensureSeeded();
     const body = CreateInviteBody.parse(req.body);
+    const maxCompanions = Math.max(0, body.maxPeople - 1);
+    if (body.companions && body.companions.length > maxCompanions) {
+      res.status(400).json({ error: "The companion list cannot exceed the invitation capacity" });
+      return;
+    }
     const token = `${body.name.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 10)}${Math.random().toString(36).slice(2, 8)}`;
     const [invite] = await db
       .insert(invitesTable)
-      .values({ ...body, token, companionTypes: body.companionTypes ?? [], status: "pending", participants: [] })
+      .values({
+        ...body,
+        token,
+        companionTypes: body.companionTypes ?? [],
+        companions: body.companions ?? [],
+        internalNotes: body.internalNotes ?? "",
+        status: "pending",
+        participants: [],
+      })
       .returning();
     res.status(201).json(normalizeInvite(invite));
   } catch (error) {
@@ -286,7 +313,20 @@ router.patch("/invites/:token", requireOrganizer, async (req, res, next) => {
   try {
     const { token } = UpdateInviteParams.parse(req.params);
     const body = UpdateInviteBody.parse(req.body);
-    const [invite] = await db.update(invitesTable).set(body).where(eq(invitesTable.token, token)).returning();
+    const [currentInvite] = await db.select().from(invitesTable).where(eq(invitesTable.token, token)).limit(1);
+    if (!currentInvite) {
+      res.status(404).json({ error: "Invitation not found" });
+      return;
+    }
+    const nextMaxPeople = body.maxPeople ?? currentInvite.maxPeople;
+    if (body.companions && body.companions.length > Math.max(0, nextMaxPeople - 1)) {
+      res.status(400).json({ error: "The companion list cannot exceed the invitation capacity" });
+      return;
+    }
+    const invite = await db.update(invitesTable).set({
+      ...body,
+      companions: body.allowCompanions === false ? [] : body.companions,
+    }).where(eq(invitesTable.token, token)).returning().then(([updated]) => updated);
     if (!invite) {
       res.status(404).json({ error: "Invitation not found" });
       return;
@@ -311,9 +351,33 @@ router.post("/invites/:token/response", async (req, res, next) => {
   try {
     const { token } = RespondToInviteParams.parse(req.params);
     const body = RespondToInviteBody.parse(req.body);
+    const [currentInvite] = await db.select().from(invitesTable).where(eq(invitesTable.token, token)).limit(1);
+    if (!currentInvite) {
+      res.status(404).json({ error: "Invitation not found" });
+      return;
+    }
+    if (body.status === "confirmed") {
+      if (body.participants.some((participant) => !participant.name.trim())) {
+        res.status(400).json({ error: "Every confirmed participant must have a name" });
+        return;
+      }
+      if (body.participants.length === 0 || body.participants.length > currentInvite.maxPeople) {
+        res.status(400).json({ error: "The confirmed participant count is invalid for this invitation" });
+        return;
+      }
+      if (!currentInvite.allowCompanions && body.participants.length > 1) {
+        res.status(400).json({ error: "This invitation does not allow companions" });
+        return;
+      }
+    }
     const [invite] = await db
       .update(invitesTable)
-      .set({ status: body.status, participants: body.participants, message: body.message ?? null, respondedAt: new Date() })
+      .set({
+        status: body.status,
+        participants: body.status === "declined" ? [] : body.participants,
+        message: body.message ?? null,
+        respondedAt: new Date(),
+      })
       .where(eq(invitesTable.token, token))
       .returning();
     if (!invite) {

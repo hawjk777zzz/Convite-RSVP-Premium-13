@@ -122,7 +122,12 @@ export const ListInvitesResponseItem = zod.object({
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})),
   "phone": zod.string().nullish(),
+  "internalNotes": zod.string(),
   "status": zod.enum(['pending', 'confirmed', 'declined']),
   "respondedAt": zod.string().nullish(),
   "message": zod.string().nullish(),
@@ -149,7 +154,12 @@ export const CreateInviteBody = zod.object({
   "maxPeople": zod.number().int().min(1).max(createInviteBodyMaxPeopleMax),
   "allowCompanions": zod.boolean(),
   "companionTypes": zod.array(zod.string()).optional(),
-  "phone": zod.string().optional()
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})).optional(),
+  "phone": zod.string().optional(),
+  "internalNotes": zod.string().optional()
 })
 
 export const CreateInviteResponse = zod.object({
@@ -159,7 +169,12 @@ export const CreateInviteResponse = zod.object({
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})),
   "phone": zod.string().nullish(),
+  "internalNotes": zod.string(),
   "status": zod.enum(['pending', 'confirmed', 'declined']),
   "respondedAt": zod.string().nullish(),
   "message": zod.string().nullish(),
@@ -188,7 +203,12 @@ export const GetInviteResponse = zod.object({
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})),
   "phone": zod.string().nullish(),
+  "internalNotes": zod.string(),
   "status": zod.enum(['pending', 'confirmed', 'declined']),
   "respondedAt": zod.string().nullish(),
   "message": zod.string().nullish(),
@@ -220,7 +240,13 @@ export const UpdateInviteBody = zod.object({
   "name": zod.string().min(updateInviteBodyNameMin).optional(),
   "maxPeople": zod.number().int().min(1).max(updateInviteBodyMaxPeopleMax).optional(),
   "allowCompanions": zod.boolean().optional(),
-  "phone": zod.string().optional()
+  "companionTypes": zod.array(zod.string()).optional(),
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})).optional(),
+  "phone": zod.string().optional(),
+  "internalNotes": zod.string().optional()
 })
 
 export const UpdateInviteResponse = zod.object({
@@ -230,7 +256,12 @@ export const UpdateInviteResponse = zod.object({
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})),
   "phone": zod.string().nullish(),
+  "internalNotes": zod.string(),
   "status": zod.enum(['pending', 'confirmed', 'declined']),
   "respondedAt": zod.string().nullish(),
   "message": zod.string().nullish(),
@@ -282,7 +313,12 @@ export const RespondToInviteResponse = zod.object({
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
+  "companions": zod.array(zod.object({
+  "name": zod.string(),
+  "relation": zod.string()
+})),
   "phone": zod.string().nullish(),
+  "internalNotes": zod.string(),
   "status": zod.enum(['pending', 'confirmed', 'declined']),
   "respondedAt": zod.string().nullish(),
   "message": zod.string().nullish(),

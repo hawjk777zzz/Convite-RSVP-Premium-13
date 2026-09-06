@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { Companion } from './companion';
 
 export interface InviteUpdate {
   /** @minLength 2 */
@@ -15,5 +16,8 @@ export interface InviteUpdate {
      */
   maxPeople?: number;
   allowCompanions?: boolean;
+  companionTypes?: string[];
+  companions?: Companion[];
   phone?: string;
+  internalNotes?: string;
 }

@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { Companion } from './companion';
 import type { InviteInputType } from './inviteInputType';
 
 export interface InviteInput {
@@ -18,5 +19,7 @@ export interface InviteInput {
   maxPeople: number;
   allowCompanions: boolean;
   companionTypes?: string[];
+  companions?: Companion[];
   phone?: string;
+  internalNotes?: string;
 }

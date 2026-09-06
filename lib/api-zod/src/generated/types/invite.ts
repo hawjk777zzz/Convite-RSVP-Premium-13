@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { Companion } from './companion';
 import type { InviteStatus } from './inviteStatus';
 import type { InviteType } from './inviteType';
 import type { Participant } from './participant';
@@ -16,8 +17,10 @@ export interface Invite {
   maxPeople: number;
   allowCompanions?: boolean;
   companionTypes?: string[];
+  companions: Companion[];
   /** @nullable */
   phone?: string | null;
+  internalNotes: string;
   status: InviteStatus;
   /** @nullable */
   respondedAt?: string | null;

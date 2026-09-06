@@ -344,9 +344,15 @@ components:
       properties:
         name: { type: string }
         kind: { type: string }
+    Companion:
+      type: object
+      required: [name, relation]
+      properties:
+        name: { type: string }
+        relation: { type: string }
     Invite:
       type: object
-      required: [token, name, type, maxPeople, status, participants]
+      required: [token, name, type, maxPeople, status, participants, companions, internalNotes]
       properties:
         token: { type: string }
         name: { type: string }
@@ -358,7 +364,11 @@ components:
         companionTypes:
           type: array
           items: { type: string }
+        companions:
+          type: array
+          items: { $ref: "#/components/schemas/Companion" }
         phone: { type: ["string", "null"] }
+        internalNotes: { type: string }
         status:
           type: string
           enum: [pending, confirmed, declined]
@@ -380,14 +390,25 @@ components:
         companionTypes:
           type: array
           items: { type: string }
+        companions:
+          type: array
+          items: { $ref: "#/components/schemas/Companion" }
         phone: { type: string }
+        internalNotes: { type: string }
     InviteUpdate:
       type: object
       properties:
         name: { type: string, minLength: 2 }
         maxPeople: { type: integer, minimum: 1, maximum: 20 }
         allowCompanions: { type: boolean }
+        companionTypes:
+          type: array
+          items: { type: string }
+        companions:
+          type: array
+          items: { $ref: "#/components/schemas/Companion" }
         phone: { type: string }
+        internalNotes: { type: string }
     InviteResponseInput:
       type: object
       required: [status, participants]

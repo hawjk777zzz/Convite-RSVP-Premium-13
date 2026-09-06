@@ -117,28 +117,41 @@ const demoInvites = [
   },
 ];
 
+const goldenAnniversaryMessage =
+  "Celebrando 50 anos de amor, companheirismo e memórias, queremos viver este momento ao lado de quem faz parte da nossa história.";
+const goldenAnniversaryTimeline = [
+  { id: 1, year: "1976", title: "O começo de tudo", description: "O início de uma vida inteira compartilhada." },
+  { id: 2, year: "1988", title: "Uma família, muitos capítulos", description: "Sonhos, aprendizados e memórias construídos lado a lado." },
+  { id: 3, year: "2005", title: "Caminhos que se multiplicaram", description: "A alegria de ver a nossa história florescer." },
+  { id: 4, year: "2026", title: "50 anos juntos", description: "Uma celebração de amor, companheirismo e tudo o que ainda vamos viver." },
+];
+
 async function ensureSeeded() {
   const [event] = await db.select({ id: eventSettingsTable.id }).from(eventSettingsTable).limit(1);
   if (!event) {
     await db.insert(eventSettingsTable).values({
-      couple: { name1: "Helena", name2: "Marcelo", yearsTogether: 28 },
+      couple: { name1: "Helena", name2: "Marcelo", yearsTogether: 50 },
       eventDate: "2026-11-15",
       eventTime: "19:00",
       venue: "Casa das Palmeiras",
       address: "Alameda das Acácias, 240 — São Paulo, SP",
       heroImage,
       mapUrl: "https://maps.google.com/?q=Casa+das+Palmeiras+Sao+Paulo",
-      message:
-        "Se chegamos até aqui, foi porque tivemos a sorte de compartilhar nossa caminhada com pessoas especiais. E você faz parte dessa história. Por isso, será uma alegria enorme celebrar este momento ao seu lado.",
+      message: goldenAnniversaryMessage,
       dressCode: "Traje social",
-      timeline: [
-        { id: 1, year: "1998", title: "O começo de tudo", description: "Foi onde nossa história começou." },
-        { id: 2, year: "2002", title: "O nosso casamento", description: "O dia em que dissemos sim." },
-        { id: 3, year: "2005", title: "Construindo nossa família", description: "Momentos, sonhos e memórias." },
-        { id: 4, year: "2026", title: "28 anos juntos", description: "E nossa história continua." },
-      ],
+      timeline: goldenAnniversaryTimeline,
       gallery: galleryImages,
     });
+  }
+
+  const [currentEvent] = await db.select().from(eventSettingsTable).limit(1);
+  const currentCouple = currentEvent?.couple as { yearsTogether?: number } | undefined;
+  if (currentEvent && currentCouple?.yearsTogether === 28) {
+    await db.update(eventSettingsTable).set({
+      couple: { ...(currentEvent.couple as Record<string, unknown>), yearsTogether: 50 },
+      message: goldenAnniversaryMessage,
+      timeline: goldenAnniversaryTimeline,
+    }).where(eq(eventSettingsTable.id, currentEvent.id));
   }
 
   const inviteCount = await db.select({ count: sql<number>`count(*)` }).from(invitesTable);

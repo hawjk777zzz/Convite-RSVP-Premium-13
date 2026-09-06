@@ -10,6 +10,16 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: event
+    description: Public event content
+  - name: invites
+    description: Personalized guest invitations
+  - name: dashboard
+    description: Organizer dashboard
+  - name: checkins
+    description: Event arrival tracking
+  - name: messages
+    description: Guest messages
 paths:
   /healthz:
     get:
@@ -24,7 +34,240 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /event:
+    get:
+      operationId: getEvent
+      tags: [event]
+      summary: Get the event and couple content
+      responses:
+        "200":
+          description: Event content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventContent"
+    put:
+      operationId: updateEvent
+      tags: [event]
+      summary: Update event and couple content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventUpdate"
+      responses:
+        "200":
+          description: Event content updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventContent"
+  /invites:
+    get:
+      operationId: listInvites
+      tags: [invites]
+      summary: List invitations for the organizer
+      responses:
+        "200":
+          description: Invitation list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Invite"
+    post:
+      operationId: createInvite
+      tags: [invites]
+      summary: Create a personalized invitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteInput"
+      responses:
+        "201":
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+  /invites/{token}:
+    get:
+      operationId: getInvite
+      tags: [invites]
+      summary: Get a personalized invitation by secure token
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      responses:
+        "200":
+          description: Personalized invitation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+        "404":
+          description: Invitation not found
+    patch:
+      operationId: updateInvite
+      tags: [invites]
+      summary: Update a personalized invitation
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteUpdate"
+      responses:
+        "200":
+          description: Invitation updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+    delete:
+      operationId: deleteInvite
+      tags: [invites]
+      summary: Delete a personalized invitation
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      responses:
+        "204":
+          description: Invitation deleted
+  /invites/{token}/response:
+    post:
+      operationId: respondToInvite
+      tags: [invites]
+      summary: Confirm or decline an invitation
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteResponseInput"
+      responses:
+        "200":
+          description: Response saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invite"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get organizer metrics and recent activity
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /checkins:
+    get:
+      operationId: listCheckins
+      tags: [checkins]
+      summary: List recent check-ins
+      responses:
+        "200":
+          description: Check-in list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Checkin"
+  /checkins/{token}:
+    post:
+      operationId: createCheckin
+      tags: [checkins]
+      summary: Check in an invitation
+      parameters:
+        - $ref: "#/components/parameters/InviteToken"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckinInput"
+      responses:
+        "201":
+          description: Check-in recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkin"
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [messages]
+      summary: List guest messages
+      responses:
+        "200":
+          description: Guest messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GuestMessage"
+    post:
+      operationId: createMessage
+      tags: [messages]
+      summary: Send a message to the couple
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestMessage"
+  /messages/{id}:
+    patch:
+      operationId: updateMessage
+      tags: [messages]
+      summary: Approve or hide a guest message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageUpdate"
+      responses:
+        "200":
+          description: Message updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestMessage"
 components:
+  parameters:
+    InviteToken:
+      name: token
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 8
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +276,193 @@ components:
           type: string
       required:
         - status
+    Couple:
+      type: object
+      required: [name1, name2, yearsTogether]
+      properties:
+        name1: { type: string }
+        name2: { type: string }
+        yearsTogether: { type: integer }
+        photoUrl: { type: string }
+    TimelineItem:
+      type: object
+      required: [id, year, title, description]
+      properties:
+        id: { type: integer }
+        year: { type: string }
+        title: { type: string }
+        description: { type: string }
+        photoUrl: { type: string }
+    GalleryImage:
+      type: object
+      required: [id, imageUrl, alt]
+      properties:
+        id: { type: integer }
+        imageUrl: { type: string }
+        alt: { type: string }
+    EventContent:
+      type: object
+      required: [couple, eventDate, eventTime, venue, address, heroImage, timeline, gallery]
+      properties:
+        couple: { $ref: "#/components/schemas/Couple" }
+        eventDate: { type: string }
+        eventTime: { type: string }
+        venue: { type: string }
+        address: { type: string }
+        heroImage: { type: string }
+        mapUrl: { type: string }
+        message: { type: string }
+        dressCode: { type: string }
+        timeline:
+          type: array
+          items: { $ref: "#/components/schemas/TimelineItem" }
+        gallery:
+          type: array
+          items: { $ref: "#/components/schemas/GalleryImage" }
+    EventUpdate:
+      type: object
+      required: [couple, eventDate, eventTime, venue, address, heroImage, mapUrl, message, timeline, gallery]
+      properties:
+        couple: { $ref: "#/components/schemas/Couple" }
+        eventDate: { type: string }
+        eventTime: { type: string }
+        venue: { type: string }
+        address: { type: string }
+        heroImage: { type: string }
+        mapUrl: { type: string }
+        message: { type: string }
+        dressCode: { type: ["string", "null"] }
+        timeline:
+          type: array
+          items: { $ref: "#/components/schemas/TimelineItem" }
+        gallery:
+          type: array
+          items: { $ref: "#/components/schemas/GalleryImage" }
+    Participant:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string }
+        kind: { type: string }
+    Invite:
+      type: object
+      required: [token, name, type, maxPeople, status, participants]
+      properties:
+        token: { type: string }
+        name: { type: string }
+        type:
+          type: string
+          enum: [individual, couple, family, group]
+        maxPeople: { type: integer }
+        allowCompanions: { type: boolean }
+        companionTypes:
+          type: array
+          items: { type: string }
+        phone: { type: ["string", "null"] }
+        status:
+          type: string
+          enum: [pending, confirmed, declined]
+        respondedAt: { type: ["string", "null"] }
+        message: { type: ["string", "null"] }
+        participants:
+          type: array
+          items: { $ref: "#/components/schemas/Participant" }
+    InviteInput:
+      type: object
+      required: [name, type, maxPeople, allowCompanions]
+      properties:
+        name: { type: string, minLength: 2 }
+        type:
+          type: string
+          enum: [individual, couple, family, group]
+        maxPeople: { type: integer, minimum: 1, maximum: 20 }
+        allowCompanions: { type: boolean }
+        companionTypes:
+          type: array
+          items: { type: string }
+        phone: { type: string }
+    InviteUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 2 }
+        maxPeople: { type: integer, minimum: 1, maximum: 20 }
+        allowCompanions: { type: boolean }
+        phone: { type: string }
+    InviteResponseInput:
+      type: object
+      required: [status, participants]
+      properties:
+        status:
+          type: string
+          enum: [confirmed, declined]
+        participants:
+          type: array
+          items: { $ref: "#/components/schemas/Participant" }
+        message: { type: string }
+    DashboardSummary:
+      type: object
+      required: [totalInvites, confirmedInvites, declinedInvites, pendingInvites, confirmedPeople, confirmationTrend]
+      properties:
+        totalInvites: { type: integer }
+        confirmedInvites: { type: integer }
+        declinedInvites: { type: integer }
+        pendingInvites: { type: integer }
+        confirmedPeople: { type: integer }
+        confirmationTrend:
+          type: array
+          items:
+            type: object
+            required: [date, count]
+            properties:
+              date: { type: string }
+              count: { type: integer }
+        recentActivity:
+          type: array
+          items:
+            type: object
+            required: [label, detail, time]
+            properties:
+              label: { type: string }
+              detail: { type: string }
+              time: { type: string }
+    Checkin:
+      type: object
+      required: [id, token, guestName, confirmedPeople, presentPeople, checkedInAt]
+      properties:
+        id: { type: integer }
+        token: { type: string }
+        guestName: { type: string }
+        confirmedPeople: { type: integer }
+        presentPeople: { type: integer }
+        checkedInAt: { type: string }
+    CheckinInput:
+      type: object
+      required: [presentPeople]
+      properties:
+        presentPeople: { type: integer, minimum: 1 }
+    GuestMessage:
+      type: object
+      required: [id, author, message, status, createdAt]
+      properties:
+        id: { type: integer }
+        author: { type: string }
+        message: { type: string }
+        status:
+          type: string
+          enum: [approved, pending, private]
+        createdAt: { type: string }
+    MessageInput:
+      type: object
+      required: [author, message]
+      properties:
+        author: { type: string, minLength: 2 }
+        message: { type: string, minLength: 2 }
+        token: { type: string }
+    MessageUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [approved, pending, private]
 

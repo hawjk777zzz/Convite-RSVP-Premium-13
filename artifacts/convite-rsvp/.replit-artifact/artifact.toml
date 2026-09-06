@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Convite RSVP Premium"
+description = "Sistema premium de convites personalizados para celebrações de aniversário de casamento, com confirmação de presença e painel de organização."
+version = "1.0.0"
+id = "artifacts/convite-rsvp"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24642
+
+[services.development]
+run = "pnpm --filter @workspace/convite-rsvp run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/convite-rsvp", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/convite-rsvp/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24642"
+BASE_PATH = "/"

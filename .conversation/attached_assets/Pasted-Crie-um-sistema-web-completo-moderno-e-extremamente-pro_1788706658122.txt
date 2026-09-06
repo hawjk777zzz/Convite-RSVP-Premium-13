@@ -1,0 +1,1196 @@
+Crie um sistema web completo, moderno e extremamente profissional para convites e confirmação de presença (RSVP) para uma comemoração de aniversário de casamento.
+
+NÃO crie um site genérico ou um simples formulário. Quero uma experiência premium, elegante, emocional e personalizada para cada convidado.
+
+## OBJETIVO DO SISTEMA
+
+O sistema será utilizado para convidar pessoas para uma comemoração de aniversário de casamento.
+
+Cada convidado ou família deverá receber um LINK EXCLUSIVO E PERSONALIZADO.
+
+Exemplo:
+
+meusite.com/convite/joao-silva-x8k29
+
+ou
+
+meusite.com/c/ABC123XYZ
+
+Quando a pessoa abrir o link, o sistema deve identificar automaticamente quem ela é e personalizar toda a experiência.
+
+Exemplo:
+
+"Olá, João e Maria! ❤️"
+
+"É uma alegria ter vocês conosco para celebrar este momento tão especial."
+
+O nome do convidado NÃO deve precisar ser digitado manualmente. Ele deve estar vinculado ao convite criado pelo administrador.
+
+---
+
+# DESIGN E EXPERIÊNCIA
+
+Quero um design extremamente bonito, moderno e profissional.
+
+O visual deve transmitir:
+
+* Elegância
+* Romance
+* Sofisticação
+* Emoção
+* Exclusividade
+* Evento especial
+
+NÃO utilizar aparência genérica de templates comuns.
+
+Criar uma interface premium semelhante a sites modernos de eventos e casamentos de alto padrão.
+
+Utilizar:
+
+* Animações suaves
+* Transições elegantes
+* Scroll suave
+* Efeitos sutis
+* Tipografia sofisticada
+* Layout responsivo
+* Excelente experiência no celular
+* Carregamento rápido
+
+O site deve funcionar perfeitamente em:
+
+* Celular
+* Tablet
+* Computador
+
+---
+
+# TELA INICIAL / HERO SECTION
+
+A primeira tela deve causar impacto.
+
+Utilizar uma FOTO GRANDE E BONITA DO CASAL como elemento principal.
+
+A foto deve possuir:
+
+* Boa apresentação
+* Overlay elegante para leitura
+* Animação suave ao carregar
+* Possibilidade de trocar facilmente pelo painel administrativo
+
+Sobre a imagem:
+
+"Celebrando nossa história"
+
+[NOME DA ESPOSA] ❤️ [NOME DO MARIDO]
+
+"XX anos de amor, histórias e momentos inesquecíveis."
+
+Também exibir:
+
+📅 Data do evento
+
+🕒 Horário
+
+📍 Local
+
+Botão elegante:
+
+"Ver meu convite"
+
+ou
+
+"Celebrar conosco"
+
+Também adicionar um contador regressivo elegante:
+
+XX Dias
+XX Horas
+XX Minutos
+XX Segundos
+
+até o evento.
+
+---
+
+# CONVITE PERSONALIZADO
+
+Cada convite deve possuir informações individuais.
+
+Exemplo para uma pessoa:
+
+Olá, João! 👋
+
+Você foi escolhido para fazer parte de um momento muito especial em nossas vidas.
+
+Será uma alegria enorme celebrar conosco nossos XX anos de casamento.
+
+---
+
+Exemplo para casal:
+
+Olá, João e Maria! ❤️
+
+Será uma grande alegria ter vocês dois conosco nessa celebração.
+
+---
+
+Exemplo para família:
+
+Olá, Família Silva! ❤️
+
+Preparamos este convite com muito carinho para vocês.
+
+---
+
+# SISTEMA DE TIPOS DE CONVIDADOS
+
+No painel administrativo, quero poder escolher diferentes tipos de convite.
+
+### Tipo 1 — Individual
+
+Exemplo:
+
+João Silva
+
+Quantidade máxima:
+
+1 pessoa
+
+---
+
+### Tipo 2 — Casal
+
+Exemplo:
+
+João Silva + acompanhante
+
+O administrador pode cadastrar:
+
+Nome principal:
+João Silva
+
+Nome do acompanhante:
+Maria Silva
+
+OU deixar o acompanhante em aberto.
+
+Na página do convite perguntar:
+
+"Você irá acompanhado?"
+
+Opções:
+
+Sim, irei com meu acompanhante ❤️
+
+Não, irei sozinho
+
+Caso o acompanhante ainda não esteja cadastrado:
+
+"Qual o nome do seu acompanhante?"
+
+---
+
+### Tipo 3 — Família
+
+Exemplo:
+
+Família Silva
+
+O administrador poderá definir:
+
+Máximo de pessoas:
+4
+
+ou
+
+Quantidade personalizada.
+
+Ao abrir o convite:
+
+"Quantas pessoas da sua família estarão presentes?"
+
+[ - ] 1 [ + ]
+
+O sistema deve respeitar o limite definido pelo administrador.
+
+Depois permitir cadastrar os nomes:
+
+Pessoa 1:
+João Silva
+
+Pessoa 2:
+Maria Silva
+
+Pessoa 3:
+Nome
+
+Pessoa 4:
+Nome
+
+---
+
+# SISTEMA INTELIGENTE DE ACOMPANHANTES
+
+Quero um sistema flexível e inteligente.
+
+No painel administrativo, ao criar o convite, quero definir:
+
+Nome do convidado:
+
+---
+
+Tipo de convite:
+
+○ Individual
+
+○ Casal
+
+○ Família
+
+○ Grupo
+
+Quantidade máxima permitida:
+
+[ 4 ]
+
+Também permitir escolher:
+
+☑ Pode levar acompanhante
+
+☐ Não pode levar acompanhante
+
+Se puder levar acompanhante:
+
+Tipo de acompanhante permitido:
+
+☑ Esposa / marido
+
+☑ Namorado(a)
+
+☑ Filho(a)
+
+☑ Familiar
+
+☑ Outro acompanhante
+
+OU permitir qualquer acompanhante.
+
+Também permitir definir:
+
+"Máximo de acompanhantes"
+
+Exemplo:
+
+Convidado principal: 1
+
+Máximo de acompanhantes: 3
+
+Total máximo: 4 pessoas
+
+---
+
+# CONFIRMAÇÃO DE PRESENÇA
+
+Criar uma experiência de confirmação elegante.
+
+Pergunta principal:
+
+"Você poderá celebrar esse momento conosco?"
+
+Dois grandes botões:
+
+✓ SIM, ESTAREI PRESENTE ❤️
+
+✕ INFELIZMENTE NÃO PODEREI COMPARECER
+
+Se confirmar presença:
+
+Mostrar uma etapa bonita:
+
+"Que alegria! 🎉"
+
+"Agora precisamos saber quem estará com você."
+
+---
+
+# ETAPA DE PARTICIPANTES
+
+Exemplo:
+
+João Silva
+✓ Confirmado
+
+Você irá acompanhado?
+
+SIM
+
+NÃO
+
+Se SIM:
+
+Adicionar participante
+
+Nome:
+
+---
+
+Tipo:
+
+○ Esposa / Marido
+
+○ Namorado(a)
+
+○ Filho(a)
+
+○ Filha
+
+○ Familiar
+
+○ Outro
+
+Botão:
+
+* Adicionar outra pessoa
+
+Mostrar contador:
+
+2 de 4 pessoas confirmadas
+
+━━━━━━━━━━
+
+O sistema deve impedir ultrapassar o limite de convidados.
+
+---
+
+# RESUMO ANTES DE CONFIRMAR
+
+Antes da confirmação final mostrar:
+
+━━━━━━━━━━━━
+
+CONFIRA SEUS DADOS
+
+👤 João Silva
+
+👤 Maria Silva — Esposa
+
+👤 Pedro Silva — Filho
+
+━━━━━━━━━━━━
+
+Total de pessoas:
+
+3 convidados
+
+━━━━━━━━━━━━
+
+Botão principal:
+
+CONFIRMAR PRESENÇA ❤️
+
+Também permitir editar os participantes antes de confirmar.
+
+---
+
+# CONFIRMAÇÃO FINAL
+
+Após confirmar:
+
+Criar uma tela especial e emocionante.
+
+Animação elegante.
+
+Mensagem:
+
+❤️ Presença confirmada!
+
+João, ficamos muito felizes em saber que você estará conosco.
+
+Será uma honra compartilhar esse momento tão especial ao lado de pessoas importantes como você.
+
+[NOME DA ESPOSA] ❤️ [NOME DO MARIDO]
+
+[DATA DO EVENTO]
+
+Também mostrar:
+
+✓ João confirmado
+
+✓ Maria confirmada
+
+✓ Pedro confirmado
+
+Total:
+3 pessoas
+
+---
+
+# OPÇÃO DE RECUSAR O CONVITE
+
+Caso a pessoa escolha que não poderá comparecer:
+
+Mostrar:
+
+"Sentiremos sua falta ❤️"
+
+"Mas agradecemos por fazer parte da nossa história."
+
+Também permitir deixar uma mensagem para o casal:
+
+"Deixe uma mensagem especial"
+
+[ Campo de texto ]
+
+Exemplo:
+
+"Desejamos muitos anos de felicidade para vocês!"
+
+Botão:
+
+Enviar mensagem ❤️
+
+---
+
+# HISTÓRIA DO CASAL
+
+Criar uma seção especial e emocional chamada:
+
+"Nossa História ❤️"
+
+Criar uma LINHA DO TEMPO interativa.
+
+Exemplo:
+
+❤️ 1998
+
+O começo de tudo
+
+Foi onde nossa história começou...
+
+↓
+
+💍 2002
+
+O nosso casamento
+
+O dia em que dissemos SIM.
+
+↓
+
+🏡 2005
+
+Construindo nossa família
+
+Momentos, sonhos e memórias.
+
+↓
+
+❤️ 2026
+
+XX anos juntos
+
+E nossa história continua...
+
+O administrador deve conseguir criar:
+
+* Ano
+* Título
+* Descrição
+* Foto
+
+Quero que a timeline tenha animações conforme o usuário rola a página.
+
+---
+
+# GALERIA DE FOTOS
+
+Criar uma seção:
+
+"Nossos Momentos 📸"
+
+Galeria moderna com fotos do casal.
+
+Recursos:
+
+* Grid elegante
+* Fotos em diferentes tamanhos
+* Abrir imagem em tela cheia
+* Animações suaves
+* Navegação entre fotos
+
+O administrador deve conseguir adicionar e remover fotos facilmente.
+
+---
+
+# MENSAGEM DO CASAL
+
+Criar uma seção especial:
+
+"Uma mensagem para você ❤️"
+
+Exemplo:
+
+"Se chegamos até aqui, foi porque tivemos a sorte de compartilhar nossa caminhada com pessoas especiais.
+
+E você faz parte dessa história.
+
+Por isso, será uma alegria enorme celebrar este momento ao seu lado."
+
+Assinado:
+
+[NOME] ❤️ [NOME]
+
+---
+
+# INFORMAÇÕES DO EVENTO
+
+Criar uma seção visualmente bonita:
+
+O GRANDE DIA
+
+📅 DATA
+
+Sábado, 15 de novembro de 2026
+
+🕒 HORÁRIO
+
+19:00
+
+📍 LOCAL
+
+Nome do local
+
+Endereço completo
+
+Botão:
+
+VER LOCALIZAÇÃO
+
+Integrar com Google Maps através de um botão.
+
+---
+
+# DRESS CODE
+
+Adicionar uma seção opcional:
+
+"Como se vestir"
+
+Exemplo:
+
+👔 Traje Social
+
+Pedimos que todos venham preparados para uma noite especial.
+
+Também permitir:
+
+* Adicionar foto de referência
+* Adicionar cores sugeridas
+* Adicionar observações
+
+Essa seção deve ser opcional e configurável.
+
+---
+
+# MURAL DE MENSAGENS
+
+Criar uma área:
+
+"Mensagens para o casal ❤️"
+
+Os convidados poderão enviar mensagens.
+
+Exemplo:
+
+João e Maria
+
+"Que essa história continue sendo cheia de amor e felicidade!"
+
+Maria e Pedro
+
+"Parabéns por todos esses anos juntos!"
+
+O administrador poderá escolher:
+
+○ Mostrar mensagens publicamente
+
+○ Aprovar mensagens antes
+
+○ Manter mensagens privadas
+
+---
+
+# PAINEL ADMINISTRATIVO COMPLETO
+
+Criar uma área administrativa protegida por login.
+
+URL:
+
+/admin
+
+Dashboard principal:
+
+━━━━━━━━━━━━
+
+CONVITES
+
+150 convidados
+
+✓ 87 confirmados
+
+✕ 20 recusaram
+
+⏳ 43 aguardando resposta
+
+━━━━━━━━━━━━
+
+PESSOAS CONFIRMADAS
+
+112 pessoas
+
+━━━━━━━━━━━━
+
+Quero gráficos modernos mostrando:
+
+* Confirmações por dia
+* Convites pendentes
+* Confirmados
+* Recusados
+
+---
+
+# GERENCIAMENTO DE CONVIDADOS
+
+Página:
+
+/admin/convidados
+
+Tabela:
+
+Nome
+
+Tipo de convite
+
+Limite de pessoas
+
+Confirmados
+
+Status
+
+Link
+
+Ações
+
+Exemplo:
+
+João Silva
+
+Casal
+
+2 pessoas
+
+2 confirmados
+
+✓ Confirmado
+
+[ Copiar link ]
+
+[ Editar ]
+
+[ Excluir ]
+
+---
+
+# CRIAR NOVO CONVITE
+
+Página:
+
+/admin/convidados/novo
+
+Campos:
+
+Nome do convite:
+
+---
+
+Tipo:
+
+○ Individual
+
+○ Casal
+
+○ Família
+
+○ Grupo
+
+Quantidade máxima:
+
+[ 4 ]
+
+Permitir acompanhante:
+
+SIM / NÃO
+
+Tipos permitidos:
+
+☑ Cônjuge
+
+☑ Namorado(a)
+
+☑ Filho(a)
+
+☑ Familiar
+
+☑ Outro
+
+Gerar link exclusivo automaticamente.
+
+Exemplo:
+
+meusite.com/c/8K2P9X
+
+Botão:
+
+CRIAR CONVITE
+
+---
+
+# LINKS EXCLUSIVOS E SEGUROS
+
+Cada convite deve ter um ID único e difícil de adivinhar.
+
+Exemplo:
+
+/c/X8K29PQS
+
+O sistema deve garantir que:
+
+* Cada convite possui ID único
+* Não seja fácil acessar outro convite alterando números
+* O convite carregue os dados corretos automaticamente
+* O mesmo convite possa ser atualizado caso o convidado altere sua resposta
+
+---
+
+# STATUS DO CONVITE
+
+Cada convite deve ter status:
+
+⏳ Aguardando resposta
+
+✓ Confirmado
+
+✕ Não poderá comparecer
+
+Também registrar:
+
+Data da resposta
+
+Quantidade confirmada
+
+Participantes confirmados
+
+Mensagem deixada
+
+Última atualização
+
+---
+
+# SISTEMA DE CHECK-IN NO EVENTO
+
+Criar uma funcionalidade EXTRA no painel.
+
+No dia do evento, o organizador poderá acessar:
+
+/admin/checkin
+
+Pesquisar pelo nome:
+
+João Silva
+
+ou escanear QR Code.
+
+Cada convite deve possuir um QR Code único.
+
+Quando chegar:
+
+✓ Check-in realizado
+
+Mostrar:
+
+Nome do convidado
+
+Pessoas confirmadas
+
+Pessoas presentes
+
+Horário do check-in
+
+Isso permitirá saber quantas pessoas realmente chegaram ao evento.
+
+---
+
+# QR CODE
+
+Cada convite deve possuir QR Code.
+
+O QR Code deve abrir o convite individual.
+
+Também criar uma opção no painel:
+
+[ Baixar QR Code ]
+
+Para o organizador enviar pelo WhatsApp ou colocar em um convite físico.
+
+---
+
+# SISTEMA DE LEMBRETES
+
+No painel administrativo, mostrar quem ainda não respondeu.
+
+Exemplo:
+
+40 convidados ainda não responderam.
+
+Selecionar convidados:
+
+☑ João
+
+☑ Maria
+
+☑ Família Silva
+
+Botão:
+
+GERAR MENSAGEM PARA WHATSAPP
+
+Exemplo:
+
+Olá, João! ❤️
+
+Estamos nos aproximando da nossa comemoração e gostaríamos muito de saber se poderemos contar com sua presença.
+
+Confirme através do seu convite:
+
+[LINK EXCLUSIVO]
+
+---
+
+# EXPORTAÇÃO DE DADOS
+
+Criar opções:
+
+[ Exportar CSV ]
+
+[ Exportar Excel ]
+
+Informações:
+
+* Nome
+* Status
+* Quantidade confirmada
+* Participantes
+* Telefone
+* Data da confirmação
+* Mensagem
+
+---
+
+# BANCO DE DADOS
+
+Utilizar banco de dados real.
+
+Criar estrutura organizada.
+
+Tabelas principais:
+
+EVENTS
+
+* id
+* nome
+* data
+* horario
+* local
+* endereco
+* foto_principal
+* mensagem
+* dress_code
+
+COUPLE
+
+* nome_1
+* nome_2
+* foto_principal
+* aniversario
+* anos_juntos
+
+GUESTS
+
+* id
+* nome
+* tipo
+* limite_pessoas
+* permite_acompanhante
+* token
+* status
+* telefone
+* created_at
+
+GUEST_RESPONSES
+
+* id
+* guest_id
+* resposta
+* quantidade
+* mensagem
+* confirmed_at
+
+PARTICIPANTS
+
+* id
+* guest_id
+* nome
+* tipo_participante
+* confirmado
+
+TIMELINE
+
+* id
+* ano
+* titulo
+* descricao
+* foto
+* ordem
+
+GALLERY
+
+* id
+* imagem
+* legenda
+* ordem
+
+MESSAGES
+
+* id
+* guest_id
+* nome
+* mensagem
+* aprovado
+* created_at
+
+CHECKINS
+
+* id
+* guest_id
+* horario
+* quantidade_presentes
+
+---
+
+# TECNOLOGIAS
+
+Criar um projeto moderno e bem estruturado.
+
+Sugestão:
+
+Frontend:
+
+* React
+* Next.js ou framework moderno equivalente
+* TypeScript
+
+Design:
+
+* Tailwind CSS
+* Componentes reutilizáveis
+* Animações modernas
+
+Backend:
+
+* API estruturada
+* Banco de dados PostgreSQL ou Supabase
+
+Autenticação:
+
+* Login seguro para administrador
+
+Hospedagem:
+
+Preparar para deploy fácil.
+
+---
+
+# QUALIDADE DO CÓDIGO
+
+IMPORTANTE:
+
+Não criar apenas uma demonstração visual.
+
+Criar um sistema REAL e FUNCIONAL.
+
+Implementar:
+
+✓ Banco de dados real
+
+✓ CRUD completo de convidados
+
+✓ Links individuais funcionando
+
+✓ Confirmação de presença funcionando
+
+✓ Sistema de acompanhantes funcionando
+
+✓ Limite de pessoas funcionando
+
+✓ Painel administrativo
+
+✓ QR Code
+
+✓ Check-in
+
+✓ Galeria
+
+✓ Timeline
+
+✓ Mural de mensagens
+
+✓ Exportação de dados
+
+✓ Responsividade completa
+
+✓ Validações
+
+✓ Estados de carregamento
+
+✓ Mensagens de erro
+
+✓ Design premium
+
+✓ Código organizado
+
+✓ Componentes reutilizáveis
+
+✓ Segurança básica
+
+✓ Tokens únicos para convites
+
+---
+
+# DETALHES IMPORTANTES DE UX
+
+O convidado deve ter uma experiência extremamente simples.
+
+Fluxo:
+
+1. Recebe o link pelo WhatsApp
+
+↓
+
+2. Abre o convite
+
+↓
+
+3. Vê seu nome personalizado
+
+↓
+
+4. Vê a foto e mensagem do casal
+
+↓
+
+5. Conhece a história do casal
+
+↓
+
+6. Vê informações do evento
+
+↓
+
+7. Confirma presença
+
+↓
+
+8. Escolhe acompanhantes
+
+↓
+
+9. Adiciona nomes dos participantes
+
+↓
+
+10. Revisa tudo
+
+↓
+
+11. Confirma
+
+↓
+
+12. Recebe mensagem especial de confirmação
+
+O processo de confirmação deve ser rápido, bonito e intuitivo.
+
+---
+
+# ESTILO VISUAL
+
+Criar uma identidade visual premium.
+
+Sugestão:
+
+* Fundo elegante
+* Branco
+* Tons champagne
+* Dourado suave
+* Bege sofisticado
+* Preto em detalhes
+
+NÃO exagerar no dourado.
+
+Utilizar bastante espaço em branco.
+
+Tipografia:
+
+Uma fonte elegante para títulos.
+
+Uma fonte moderna e fácil de ler para textos.
+
+Visual inspirado em:
+
+* Sites premium de casamento
+* Eventos de luxo
+* Convites modernos
+* Experiências digitais exclusivas
+
+---
+
+# RESULTADO FINAL ESPERADO
+
+Quero um sistema que pareça um PRODUTO PROFISSIONAL pronto para ser utilizado em eventos reais.
+
+Não quero uma landing page simples.
+
+Quero um verdadeiro SISTEMA DE GERENCIAMENTO DE CONVIDADOS E RSVP.
+
+O site deve emocionar o convidado e ao mesmo tempo facilitar completamente a organização do evento.
+
+O administrador deve conseguir controlar tudo sem precisar alterar código.
+
+Criar dados de demonstração para que o sistema possa ser testado imediatamente.
+
+Criar também uma área de configurações onde seja possível alterar:
+
+* Nome do casal
+* Foto principal
+* Data
+* Horário
+* Local
+* Endereço
+* História
+* Timeline
+* Fotos
+* Mensagem
+* Dress code
+* Cores do evento
+
+IMPORTANTE: antes de considerar o projeto finalizado, garantir que todas as funcionalidades estejam conectadas e funcionando de verdade.

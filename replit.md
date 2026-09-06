@@ -1,6 +1,6 @@
-# [Project name]
+# Convite RSVP Premium
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Sistema premium de convites personalizados para celebrações, com RSVP, painel do organizador e check-in no evento.
 
 ## Run & Operate
 
@@ -22,23 +22,29 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/convite-rsvp` — React/Vite invitation and organizer application.
+- `artifacts/api-server/src/routes/rsvp.ts` — RSVP, invites, dashboard, messages, and check-in API.
+- `lib/api-spec/openapi.yaml` — source of truth for API contracts.
+- `lib/db/src/schema/event.ts` — Drizzle schema for event content, invitations, messages, and check-ins.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Public invitation pages use secure invitation tokens; organizer routes are protected with Clerk.
+- Event content is seeded in PostgreSQL so the preview is usable immediately and can later be edited from settings.
+- The public invitation and organizer workspace intentionally share the same event data and API contracts.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Guests receive a personalized invitation, explore the couple's story, confirm or decline attendance, add participants, and leave a message. Organizers can review attendance, manage invite links, moderate messages, and check guests in.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+The requested visual direction is premium, romantic, emotional, sophisticated, and mobile-friendly rather than a generic template.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Regenerate the API client after changing `lib/api-spec/openapi.yaml`.
+- Organizer data endpoints require a Clerk session; public event/invitation response endpoints remain open.
 
 ## Pointers
 

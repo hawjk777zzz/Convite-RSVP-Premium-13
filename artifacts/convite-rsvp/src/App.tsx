@@ -5,7 +5,7 @@ import { ClerkProvider, SignIn, SignUp, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import {
-  Archive, ArrowRight, BarChart3, CalendarDays, Check, CheckCircle2, ChevronDown, Clock3, Copy, ExternalLink,
+  Archive, ArrowRight, BarChart3, CalendarDays, CalendarPlus, Check, CheckCircle2, ChevronDown, Clock3, Copy, ExternalLink,
   Heart, Image as ImageIcon, LayoutDashboard, Loader2, Mail, MapPinned, Menu, MessageCircle, Pencil, Plus, Quote, Search, Send,
   Settings, ShieldCheck, Sparkles, Trash2, UserCheck, Users, X, XCircle
 } from 'lucide-react';
@@ -40,6 +40,37 @@ function shortDate(value?: string) {
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
 }
 function timeLabel(value?: string) { if (!value) return 'agora'; return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }
+function downloadCalendarEvent(event: { couple: { name1: string; name2: string }; eventDate: string; eventTime: string; venue: string; address: string }) {
+  const start = new Date(`${event.eventDate}T${event.eventTime}:00`);
+  if (Number.isNaN(start.getTime())) return;
+  const end = new Date(start.getTime() + 4 * 60 * 60 * 1000);
+  const icsDate = (value: Date) => value.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  const escapeIcs = (value: string) => value.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+  const title = `Celebração de ${event.couple.name1} e ${event.couple.name2}`;
+  const content = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Convite RSVP Premium//PT-BR',
+    'BEGIN:VEVENT',
+    `UID:${event.eventDate}-${event.eventTime}-${event.couple.name1}@convite-rsvp`,
+    `DTSTAMP:${icsDate(new Date())}`,
+    `DTSTART:${icsDate(start)}`,
+    `DTEND:${icsDate(end)}`,
+    `SUMMARY:${escapeIcs(title)}`,
+    `LOCATION:${escapeIcs(`${event.venue} — ${event.address}`)}`,
+    `DESCRIPTION:${escapeIcs('Uma celebração para guardar na memória.')}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+  const url = URL.createObjectURL(new Blob([content], { type: 'text/calendar;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'celebracao-antonio-e-aparecida.ics';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 type CompanionDraft = { name: string; relation: string };
 type InviteFormData = {
   name: string;
@@ -246,7 +277,7 @@ function Invitation({ token }: { token: string }) {
 
     <section className="public-section public-section--wine" data-testid="section-countdown">
       <PublicReveal className="public-section-inner">
-        <div className="public-countdown-wrap"><div><div className="public-section-kicker">A próxima página</div><h2 className="public-section-heading">O encontro está se aproximando.</h2></div><AnniversaryCountdown target={event.eventDate} /></div>
+        <div className="public-countdown-wrap"><div><div className="public-section-kicker">A próxima página</div><h2 className="public-section-heading">O encontro está se aproximando.</h2><p className="public-countdown-note">Reserve esta data e deixe o celular lembrar você desse momento.</p></div><div className="public-countdown-actions"><AnniversaryCountdown target={event.eventDate} /><button type="button" className="public-calendar-button" onClick={() => downloadCalendarEvent(event)} data-testid="button-add-to-calendar"><CalendarPlus size={15} /> Adicionar ao calendário</button></div></div>
       </PublicReveal>
     </section>
 

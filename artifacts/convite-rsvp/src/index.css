@@ -336,10 +336,14 @@ button { cursor: pointer; }
 .public-portrait img { width: 100%; height: 100%; min-height: 410px; display: block; object-fit: cover; filter: saturate(.63) contrast(1.03); }
 .public-portrait figcaption { position: absolute; left: 25px; bottom: 23px; color: #f4ecde; font-family: var(--app-font-mono); font-size: 8px; letter-spacing: .14em; text-transform: uppercase; text-shadow: 0 1px 8px rgba(10,20,16,.7); }
 .public-countdown-wrap { display: grid; grid-template-columns: minmax(250px, .9fr) 1.1fr; gap: 60px; align-items: end; }
+.public-countdown-note { max-width: 310px; margin-top: 21px; color: rgba(238,230,215,.58); font-size: 12px; line-height: 1.75; }
+.public-countdown-actions { min-width: 0; }
 .public-countdown { display: grid; grid-template-columns: repeat(4, minmax(52px, 1fr)); gap: 8px; }
 .public-countdown-item { padding: 19px 8px 15px; border-top: 1px solid rgba(218,176,103,.72); border-bottom: 1px solid rgba(218,176,103,.28); text-align: center; }
 .public-countdown-number { display: block; color: #e9c37f; font-family: 'Instrument Serif', Georgia, serif; font-size: clamp(34px, 4vw, 58px); line-height: .9; }
 .public-countdown-label { display: block; margin-top: 9px; color: rgba(238,230,215,.52); font-family: var(--app-font-mono); font-size: 7px; letter-spacing: .13em; text-transform: uppercase; }
+.public-calendar-button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; margin-top: 22px; border: 1px solid rgba(218,176,103,.72); padding: 12px 16px; background: transparent; color: #e9c37f; font-size: 9px; letter-spacing: .14em; text-transform: uppercase; transition: background .2s ease, color .2s ease, transform .2s ease; }
+.public-calendar-button:hover { background: #d7ab67; color: var(--ink); transform: translateY(-2px); }
 .public-location-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 1px; margin-top: 58px; border-top: 1px solid rgba(218,176,103,.4); border-bottom: 1px solid rgba(218,176,103,.4); }
 .public-detail { padding: 28px 25px 30px 0; border-right: 1px solid rgba(218,176,103,.4); }
 .public-detail + .public-detail { padding-left: 26px; border-right: 0; }
@@ -413,13 +417,22 @@ button { cursor: pointer; }
   .public-hero { min-height: 840px; padding: 132px 20px 54px; }
   .public-hero-grid, .public-intro-grid, .public-countdown-wrap, .public-message-shell { grid-template-columns: 1fr; }
   .public-hero-grid { gap: 37px; }
-  .public-hero-title { font-size: clamp(67px, 20vw, 122px); }
-  .public-hero-card { max-width: 300px; }
+  .public-hero-title { max-width: 100%; font-size: clamp(61px, 19vw, 108px); line-height: .84; overflow-wrap: anywhere; }
+  .public-hero-subtitle { font-size: 12px; }
+  .public-hero-meta { flex-wrap: wrap; row-gap: 8px; line-height: 1.5; }
+  .public-hero-card { width: 100%; max-width: none; }
   .public-scroll-cue { display: none; }
   .public-section { padding: 82px 20px; }
+  .public-section-heading { font-size: clamp(43px, 14vw, 67px); line-height: .96; }
   .public-portrait { min-height: 320px; box-shadow: 9px 10px 0 var(--paper-deep); }
   .public-portrait img { min-height: 300px; }
   .public-countdown-wrap { gap: 37px; }
+  .public-countdown-note { max-width: 280px; }
+  .public-countdown { gap: 5px; }
+  .public-countdown-item { padding: 16px 4px 13px; }
+  .public-countdown-number { font-size: clamp(31px, 12vw, 45px); }
+  .public-countdown-label { font-size: 6px; letter-spacing: .08em; }
+  .public-calendar-button { width: 100%; margin-top: 18px; }
   .public-location-grid { grid-template-columns: 1fr; margin-top: 43px; }
   .public-detail, .public-detail + .public-detail { padding: 22px 0; border-right: 0; }
   .public-detail + .public-detail { border-top: 1px solid rgba(218,176,103,.4); }

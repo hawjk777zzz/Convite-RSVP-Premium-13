@@ -36,6 +36,7 @@ const requireOrganizer: RequestHandler = (req, res, next) => {
 
 const heroImage =
   "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85";
+const couplePortrait = "/images/antonio-aparecida.jpg";
 const galleryImages = [
   {
     id: 1,
@@ -142,8 +143,8 @@ async function ensureSeeded() {
   const [event] = await db.select({ id: eventSettingsTable.id }).from(eventSettingsTable).limit(1);
   if (!event) {
     await db.insert(eventSettingsTable).values({
-      couple: { name1: "Helena", name2: "Marcelo", yearsTogether: 50 },
-      eventDate: "2026-11-15",
+      couple: { name1: "Antônio", name2: "Aparecida", yearsTogether: 50, photoUrl: couplePortrait },
+      eventDate: "2026-10-17",
       eventTime: "19:00",
       venue: "Casa das Palmeiras",
       address: "Alameda das Acácias, 240 — São Paulo, SP",
@@ -157,7 +158,14 @@ async function ensureSeeded() {
   }
 
   const [currentEvent] = await db.select().from(eventSettingsTable).limit(1);
-  const currentCouple = currentEvent?.couple as { yearsTogether?: number } | undefined;
+  const currentCouple = currentEvent?.couple as { name1?: string; name2?: string; yearsTogether?: number; photoUrl?: string } | undefined;
+  if (currentEvent && currentCouple?.name1 === "Helena" && currentCouple?.name2 === "Marcelo" && currentEvent.eventDate === "2026-11-15") {
+    await db.update(eventSettingsTable).set({
+      couple: { ...(currentEvent.couple as Record<string, unknown>), name1: "Antônio", name2: "Aparecida", photoUrl: couplePortrait },
+      eventDate: "2026-10-17",
+      eventTime: "19:00",
+    }).where(eq(eventSettingsTable.id, currentEvent.id));
+  }
   if (currentEvent && currentCouple?.yearsTogether === 28) {
     await db.update(eventSettingsTable).set({
       couple: { ...(currentEvent.couple as Record<string, unknown>), yearsTogether: 50 },

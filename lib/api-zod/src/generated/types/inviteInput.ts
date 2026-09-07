@@ -18,6 +18,7 @@ export interface InviteInput {
      */
   maxPeople: number;
   allowCompanions: boolean;
+  allowResponseEdits?: boolean;
   companionTypes?: string[];
   companions?: Companion[];
   phone?: string;

@@ -198,6 +198,7 @@ function normalizeInvite(invite: typeof invitesTable.$inferSelect) {
     type: invite.type,
     maxPeople: invite.maxPeople,
     allowCompanions: invite.allowCompanions,
+    allowResponseEdits: invite.allowResponseEdits,
     companionTypes: invite.companionTypes,
     companions: invite.companions,
     phone: invite.phone,
@@ -377,6 +378,10 @@ router.post("/invites/:token/response", async (req, res, next) => {
     const [currentInvite] = await db.select().from(invitesTable).where(eq(invitesTable.token, token)).limit(1);
     if (!currentInvite) {
       res.status(404).json({ error: "Invitation not found" });
+      return;
+    }
+    if (currentInvite.status !== "pending" && !currentInvite.allowResponseEdits) {
+      res.status(409).json({ error: "This invitation response is locked by the organizers" });
       return;
     }
     if (body.status === "confirmed") {

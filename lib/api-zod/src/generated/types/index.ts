@@ -32,4 +32,5 @@ export * from './messageInput';
 export * from './messageUpdate';
 export * from './messageUpdateStatus';
 export * from './participant';
+export * from './respondToInvite409';
 export * from './timelineItem';

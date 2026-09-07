@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import {
   getGetDashboardSummaryQueryKey, getGetEventQueryKey, getGetInviteQueryKey, getHealthCheckQueryKey, getListCheckinsQueryKey,
-  getGetConfirmedParticipantsQueryKey, getListInvitesQueryKey, getListMessagesQueryKey, useCreateCheckin, useCreateInvite, useCreateMessage,
-  useDeleteInvite, useGetConfirmedParticipants, useGetDashboardSummary, useGetEvent, useGetInvite, useListCheckins, useListInvites,
+  getListInvitesQueryKey, getListMessagesQueryKey, useCreateCheckin, useCreateInvite, useCreateMessage,
+  useDeleteInvite, useGetDashboardSummary, useGetEvent, useGetInvite, useListCheckins, useListInvites,
   useListMessages, useRespondToInvite, useUpdateEvent, useUpdateInvite, useUpdateMessage, useHealthCheck
 } from '@workspace/api-client-react';
 import type { GuestMessage, Invite, InviteInputType, Participant } from '@workspace/api-client-react';
@@ -38,6 +38,12 @@ function shortDate(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(date);
+}
+function eventDateLabel(value?: string) {
+  if (!value) return '—';
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  if (![year, month, day].every(Number.isFinite)) return value;
+  return new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(year, month - 1, day));
 }
 function timeLabel(value?: string) { if (!value) return 'agora'; return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(value)); }
 function downloadCalendarEvent(event: { couple: { name1: string; name2: string }; eventDate: string; eventTime: string; venue: string; address: string }) {
@@ -77,6 +83,7 @@ type InviteFormData = {
   type: InviteInputType;
   maxPeople: number;
   allowCompanions: boolean;
+  allowResponseEdits: boolean;
   companions: CompanionDraft[];
   phone: string;
   internalNotes: string;
@@ -171,9 +178,44 @@ function AnniversaryCountdown({ target }: { target: string }) {
   </div>;
 }
 
+function CompanionResponses({
+  slots,
+  names,
+  attendance,
+  onNameChange,
+  onAttendanceChange,
+}: {
+  slots: CompanionDraft[];
+  names: string[];
+  attendance: boolean[];
+  onNameChange: (index: number, value: string) => void;
+  onAttendanceChange: (index: number, value: boolean) => void;
+}) {
+  return <div className="mt-6" data-testid="companion-responses">
+    <label className="label">Acompanhantes</label>
+    <p className="mb-3 text-xs text-[#536056]">Cada acompanhante pode confirmar ou recusar individualmente. Os nomes definidos pelos anfitriões não podem ser alterados.</p>
+    {slots.map((companion, index) => <div key={`companion-response-${index}`} className="mb-4 rounded border border-[#cbbda9] bg-[#f7f0e5] p-3" data-testid={`companion-response-${index}`}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="text-sm text-[#536056]">{companion.name ? `${companion.name} · ${companion.relation || 'Acompanhante'}` : 'Acompanhante ainda não definido'}</span>
+        {!companion.name && <span className="rounded-full bg-[#e3d6c4] px-2 py-1 text-[10px] text-[#536056]">Vaga disponível</span>}
+      </div>
+      <div className="public-companion-attendance">
+        <label className={`public-companion-option ${attendance[index] ? 'selected' : ''}`}>
+          <input type="radio" name={`companion-attendance-${index}`} checked={Boolean(attendance[index])} onChange={() => onAttendanceChange(index, true)} />
+          <span>Vai estar</span>
+        </label>
+        <label className={`public-companion-option ${!attendance[index] ? 'selected' : ''}`}>
+          <input type="radio" name={`companion-attendance-${index}`} checked={!attendance[index]} onChange={() => onAttendanceChange(index, false)} />
+          <span>Não vai</span>
+        </label>
+      </div>
+      {!companion.name && attendance[index] && <input value={names[index] || ''} onChange={(eventInput) => onNameChange(index, eventInput.target.value)} className="field mt-3" placeholder="Nome do acompanhante" aria-label="Nome do acompanhante" data-testid={`input-participant-${index}`} />}
+    </div>)}
+  </div>;
+}
+
 function Invitation({ token }: { token: string }) {
   const eventQuery = useGetEvent({ query: { queryKey: getGetEventQueryKey() } });
-  const confirmedParticipantsQuery = useGetConfirmedParticipants({ query: { queryKey: getGetConfirmedParticipantsQueryKey() } });
   const inviteQuery = useGetInvite(token, { query: { queryKey: getGetInviteQueryKey(token) } });
   const respond = useRespondToInvite();
   const createMessage = useCreateMessage();
@@ -183,6 +225,7 @@ function Invitation({ token }: { token: string }) {
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [choice, setChoice] = useState<'confirmed' | 'declined'>('confirmed');
   const [names, setNames] = useState<string[]>([]);
+  const [companionAttendance, setCompanionAttendance] = useState<boolean[]>([]);
   const [note, setNote] = useState('');
   const [message, setMessage] = useState('');
   const [messageAuthor, setMessageAuthor] = useState('');
@@ -197,10 +240,18 @@ function Invitation({ token }: { token: string }) {
     })()
     : [];
   const confirmedCompanionNames = invite?.participants?.filter((participant) => participant.kind !== 'titular').map((participant) => participant.name) || [];
+  const responseLocked = Boolean(invite && invite.status !== 'pending' && !invite.allowResponseEdits);
   const openRsvp = () => {
     if (!invite) return;
+    if (responseLocked) {
+      notify('Sua resposta já foi registrada. A edição está bloqueada pelos anfitriões.');
+      return;
+    }
     setChoice(invite.status === 'declined' ? 'declined' : 'confirmed');
-    setNames(companionSlots.map((companion, index) => confirmedCompanionNames[index] || companion.name));
+    const definedNames = new Set(companionSlots.filter((companion) => companion.name).map((companion) => companion.name));
+    const openNames = confirmedCompanionNames.filter((name) => !definedNames.has(name));
+    setNames(companionSlots.map((companion, index) => companion.name || openNames[index] || ''));
+    setCompanionAttendance(companionSlots.map((companion, index) => companion.name ? (invite.status === 'pending' || confirmedCompanionNames.includes(companion.name)) : Boolean(openNames[index])));
     setNote(invite.message || '');
     setRsvpOpen(true);
   };
@@ -217,25 +268,31 @@ function Invitation({ token }: { token: string }) {
   if (eventQuery.isLoading || inviteQuery.isLoading) return <main className="public-invite min-h-dvh p-5 md:p-12" aria-busy="true"><div className="skeleton h-[82vh] w-full opacity-20" /><p className="sr-only">Carregando seu convite</p></main>;
   if (eventQuery.isError || inviteQuery.isError || !event || !invite) return <main className="public-invite grid min-h-dvh place-items-center p-6"><div className="public-rsvp-shell public-reveal is-visible"><Heart className="mx-auto text-[#e2be74]" size={29} /><h1 className="public-section-heading mx-auto mt-5 text-center">Este convite está em pausa</h1><p className="public-hero-subtitle mx-auto mt-4 text-center">Confira o link recebido ou fale com os anfitriões para receber ajuda.</p><button className="public-rsvp-button" onClick={() => { eventQuery.refetch(); inviteQuery.refetch(); }} data-testid="button-retry-invite">Tentar novamente</button></div></main>;
 
-  const date = new Date(event.eventDate);
-  const formattedDate = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+  const formattedDate = eventDateLabel(event.eventDate);
   const guestMessage = invite.message || event.message || 'Depois de 50 anos juntos, queremos celebrar esta história ao lado de quem torna a nossa vida mais bonita.';
   const coupleLabel = `${event.couple.name1} & ${event.couple.name2}`;
   const submitResponse = () => {
-    const trimmedNames = names.map((name) => name.trim()).filter(Boolean);
-    const participantNames = choice === 'declined' ? [] : [invite.name.trim(), ...trimmedNames].filter(Boolean).slice(0, invite.maxPeople);
+    const attendingCompanionWithoutName = choice === 'confirmed' && companionSlots.some((companion, index) => companionAttendance[index] && !companion.name.trim() && !names[index]?.trim());
+    if (attendingCompanionWithoutName) {
+      notify('Informe o nome de cada acompanhante marcado como presente.');
+      return;
+    }
     const finalParticipants: Participant[] = choice === 'declined'
       ? []
-      : participantNames.map((name, index) => ({
-        name,
-        kind: index === 0 ? 'titular' : (companionSlots[index - 1]?.relation || 'Acompanhante'),
-      }));
+      : [
+        { name: invite.name.trim(), kind: 'titular' },
+        ...companionSlots.flatMap((companion, index) => {
+          if (!companionAttendance[index]) return [];
+          const name = companion.name.trim() || names[index].trim();
+          return name ? [{ name, kind: companion.relation || 'Acompanhante' }] : [];
+        }),
+      ].slice(0, invite.maxPeople);
     if (choice === 'confirmed' && (!finalParticipants.length || finalParticipants.length > invite.maxPeople)) {
       notify('Informe ao menos o nome do convidado principal.');
       return;
     }
     respond.mutate({ token, data: { status: choice, participants: finalParticipants, message: note } }, {
-       onSuccess: () => { client.invalidateQueries({ queryKey: getGetInviteQueryKey(token) }); client.invalidateQueries({ queryKey: getGetConfirmedParticipantsQueryKey() }); setRsvpOpen(false); notify(choice === 'confirmed' ? 'Presença confirmada. Será uma alegria ter você conosco.' : 'Resposta registrada com carinho.'); },
+       onSuccess: () => { client.invalidateQueries({ queryKey: getGetInviteQueryKey(token) }); setRsvpOpen(false); notify(choice === 'confirmed' ? 'Presença confirmada. Será uma alegria ter você conosco.' : 'Resposta registrada com carinho.'); },
       onError: () => notify('Não conseguimos salvar agora. Tente novamente em instantes.'),
     });
   };
@@ -261,7 +318,7 @@ function Invitation({ token }: { token: string }) {
           <strong>{invite.name}</strong>
           <p>{guestMessage}</p>
           {invite.type !== 'individual' && invite.allowCompanions && invite.maxPeople > 1 && <div className="mt-4 border-t border-[#d7ab67]/30 pt-4" data-testid="text-invite-composition"><div className="public-hero-card-label">Com você</div>{invite.companions?.length ? <div className="mt-2 space-y-1">{invite.companions.map((companion, index) => <div key={`hero-companion-${index}`} className="text-xs text-[#ead09d]" data-testid={`text-hero-companion-${index}`}>{companion.name || 'Acompanhante ainda não definido'} <span className="text-[10px] text-white/55">· {companion.relation || 'Acompanhante'}</span></div>)}</div> : <div className="mt-2 text-xs text-[#ead09d]">{invite.maxPeople - 1} vagas de acompanhante disponíveis</div>}</div>}
-          <button type="button" className="public-hero-card-cta" onClick={openRsvp} data-testid="button-hero-rsvp">Responder à carta <ArrowRight size={13} /></button>
+          <button type="button" className="public-hero-card-cta" onClick={openRsvp} disabled={responseLocked} data-testid="button-hero-rsvp">{responseLocked ? 'Resposta já registrada' : invite.status === 'pending' ? 'Responder à carta' : 'Editar resposta'} <ArrowRight size={13} /></button>
         </aside>
       </div>
       <a className="public-scroll-cue" href="#abertura" aria-label="Descer para a celebração"><ChevronDown size={14} /> Abrir</a>
@@ -278,7 +335,7 @@ function Invitation({ token }: { token: string }) {
 
     <section className="public-section public-section--wine" data-testid="section-countdown">
       <PublicReveal className="public-section-inner">
-        <div className="public-countdown-wrap"><div><div className="public-section-kicker">A próxima página</div><h2 className="public-section-heading">O encontro está se aproximando.</h2><p className="public-countdown-note">Reserve esta data e deixe o celular lembrar você desse momento.</p></div><div className="public-countdown-actions"><AnniversaryCountdown target={event.eventDate} /><button type="button" className="public-calendar-button" onClick={() => downloadCalendarEvent(event)} data-testid="button-add-to-calendar"><CalendarPlus size={15} /> Adicionar ao calendário</button></div></div>
+         <div className="public-countdown-wrap"><div><div className="public-section-kicker">A próxima página</div><h2 className="public-section-heading">O encontro está se aproximando.</h2><p className="public-countdown-note">Reserve esta data e deixe o celular lembrar você desse momento.</p></div><div className="public-countdown-actions"><AnniversaryCountdown target={`${event.eventDate}T${event.eventTime}:00-03:00`} /><button type="button" className="public-calendar-button" onClick={() => downloadCalendarEvent(event)} data-testid="button-add-to-calendar"><CalendarPlus size={15} /> Adicionar ao calendário</button></div></div>
       </PublicReveal>
     </section>
 
@@ -293,17 +350,17 @@ function Invitation({ token }: { token: string }) {
     {event.gallery?.length > 0 && <section className="public-section public-section--plum" data-testid="section-gallery"><PublicReveal className="public-section-inner"><div className="public-gallery-intro"><div><div className="public-section-kicker">Fotografias encontradas</div><h2 className="public-section-heading">Memórias para <em>guardar.</em></h2></div><p className="public-gallery-note">Um pequeno álbum de instantes que continuam presentes na forma como eles olham um para o outro.</p></div><div className="public-gallery">{event.gallery.map((image) => <figure key={image.id} data-testid={`gallery-item-${image.id}`}><img src={image.imageUrl} alt={image.alt} data-testid={`img-gallery-${image.id}`} /><figcaption>{image.alt}</figcaption></figure>)}</div></PublicReveal></section>}
 
     <section className="public-section public-section--plum" id="celebracao" data-testid="section-celebration-details">
-       <PublicReveal className="public-section-inner"><div className="public-section-kicker">A página do encontro</div><h2 className="public-section-heading">{event.venue}</h2><p className="public-hero-subtitle mt-5 max-w-md">Uma noite para brindar ao tempo, às escolhas e a todos os encontros que fizeram parte do caminho.</p><div className="public-location-grid"><div className="public-detail"><CalendarDays size={18} className="mb-4 text-[#d7ab67]" /><div className="public-detail-label">Quando</div><div className="public-detail-value">{formattedDate}</div><div className="public-detail-copy">{event.eventTime}</div></div><div className="public-detail"><MapPinned size={18} className="mb-4 text-[#d7ab67]" /><div className="public-detail-label">Onde</div><div className="public-detail-value">{event.address}</div>{event.mapUrl && <a href={event.mapUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-[#e9c37f]" data-testid="link-map">Abrir mapa <ArrowRight size={12} /></a>}</div></div><div className="public-confirmed-list" data-testid="section-confirmed-participants"><div className="public-confirmed-list-heading"><div className="public-section-kicker">Presenças confirmadas</div><span>{confirmedParticipantsQuery.data?.participants.length || 0} {confirmedParticipantsQuery.data?.participants.length === 1 ? 'pessoa' : 'pessoas'}</span></div>{confirmedParticipantsQuery.data?.participants.length ? <div className="public-confirmed-names">{confirmedParticipantsQuery.data.participants.map((participant, index) => <div className="public-confirmed-person" key={`${participant.name}-${index}`} data-testid={`confirmed-participant-${index}`}><CheckCircle2 size={15} /><span>{participant.name}</span></div>)}</div> : <p className="public-confirmed-empty">As presenças confirmadas aparecerão aqui.</p>}</div>{event.dressCode && <div className="mt-9 flex items-center gap-3 text-xs text-white/65"><Sparkles size={16} className="text-[#d7ab67]" /><span>Traje sugerido: <strong className="font-medium text-[#e9c37f]">{event.dressCode}</strong></span></div>}</PublicReveal>
+       <PublicReveal className="public-section-inner"><div className="public-section-kicker">Data e local</div><h2 className="public-section-heading">O encontro que vamos celebrar.</h2><p className="public-hero-subtitle mt-5 max-w-md">Uma noite para brindar ao tempo, às escolhas e a todos os encontros que fizeram parte do caminho.</p><div className="public-location-grid"><div className="public-detail"><CalendarDays size={18} className="mb-4 text-[#d7ab67]" /><div className="public-detail-label">Quando</div><div className="public-detail-value">{formattedDate}</div><div className="public-detail-copy">{event.eventTime}</div></div><div className="public-detail"><MapPinned size={18} className="mb-4 text-[#d7ab67]" /><div className="public-detail-label">Onde</div><div className="public-detail-value">{event.address}</div>{event.mapUrl && <a href={event.mapUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-[#e9c37f]" data-testid="link-map">Abrir mapa <ArrowRight size={12} /></a>}</div></div>{event.dressCode && <div className="mt-9 flex items-center gap-3 text-xs text-white/65"><Sparkles size={16} className="text-[#d7ab67]" /><span>Traje sugerido: <strong className="font-medium text-[#e9c37f]">{event.dressCode}</strong></span></div>}</PublicReveal>
     </section>
 
-    <section className="public-section public-section--paper" id="public-rsvp" data-testid="section-rsvp"><PublicReveal className="public-rsvp-shell"><div className="public-section-kicker">A folha de resposta</div><h2 className="public-section-heading mx-auto mt-4">{hasCompanionFields ? 'Vocês poderão estar conosco?' : 'Você poderá estar conosco?'}</h2><div className="public-rule" /><p className="public-rsvp-copy">{hasCompanionFields ? 'Sua presença é o presente que mais desejamos. Confirme com calma — e conte quem estará com você.' : 'Sua presença é o presente que mais desejamos. Confirme com calma.'}</p><button className="public-rsvp-button" onClick={openRsvp} data-testid="button-open-rsvp"><Heart size={14} /> Responder convite</button>{invite.status !== 'pending' && <div className="public-rsvp-status" data-testid="status-rsvp"><CheckCircle2 size={14} className="text-[#4a8a69]" /> Sua resposta já foi registrada como <strong>{invite.status === 'confirmed' ? 'confirmada' : 'declinada'}</strong>.</div>}</PublicReveal></section>
+     <section className="public-section public-section--paper" id="public-rsvp" data-testid="section-rsvp"><PublicReveal className="public-rsvp-shell"><div className="public-section-kicker">A folha de resposta</div><h2 className="public-section-heading mx-auto mt-4">{hasCompanionFields ? 'Vocês poderão estar conosco?' : 'Você poderá estar conosco?'}</h2><div className="public-rule" /><p className="public-rsvp-copy">{hasCompanionFields ? 'Sua presença é o presente que mais desejamos. Confirme com calma — e conte quem estará com você.' : 'Sua presença é o presente que mais desejamos. Confirme com calma.'}</p><button className="public-rsvp-button" onClick={openRsvp} disabled={responseLocked} data-testid="button-open-rsvp"><Heart size={14} /> {responseLocked ? 'Resposta já registrada' : invite.status === 'pending' ? 'Responder convite' : 'Editar resposta'}</button>{invite.status !== 'pending' && <div className="public-rsvp-status" data-testid="status-rsvp"><CheckCircle2 size={14} className="text-[#4a8a69]" /> Sua resposta já foi registrada como <strong>{invite.status === 'confirmed' ? 'confirmada' : 'declinada'}</strong>{!invite.allowResponseEdits && ' e está bloqueada para edição'}.</div>}</PublicReveal></section>
 
     <section className="public-section public-section--wine" data-testid="section-guest-message"><PublicReveal className="public-section-inner public-message-shell"><div><div className="public-section-kicker">Uma última folha</div><h2 className="public-section-heading mt-4">Deixe uma mensagem para os anfitriões.</h2><p className="mt-5 max-w-xs text-sm leading-relaxed text-white/60">Palavras simples também viram lembrança. Escreva algo que eles possam guardar.</p></div><form className="public-message-form" onSubmit={(eventForm) => { eventForm.preventDefault(); if (!messageAuthor || !message) return; createMessage.mutate({ data: { author: messageAuthor, message, token } }, { onSuccess: () => { setMessage(''); setMessageAuthor(''); notify('Mensagem enviada para os anfitriões.'); }, onError: () => notify('Não conseguimos enviar sua mensagem agora.') }); }}><input value={messageAuthor} onChange={(eventInput) => setMessageAuthor(eventInput.target.value)} className="field" placeholder="Seu nome" aria-label="Seu nome" data-testid="input-message-author" /><textarea value={message} onChange={(eventInput) => setMessage(eventInput.target.value)} className="field" placeholder="Escreva com carinho..." aria-label="Sua mensagem" data-testid="input-guest-message" /><button type="submit" disabled={createMessage.isPending || !messageAuthor.trim() || !message.trim()} data-testid="button-send-message">{createMessage.isPending ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />} Enviar mensagem</button></form></PublicReveal></section>
 
     <footer className="public-footer"><div className="public-footer-names">{coupleLabel}</div><div className="public-footer-note">Com amor, sempre · {event.couple.yearsTogether} anos</div></footer>
 
-    {welcomeOpen && <div className="public-modal-backdrop public-welcome-backdrop" role="presentation" onMouseDown={(eventModal) => { if (eventModal.target === eventModal.currentTarget) setWelcomeOpen(false); }}><div className="public-welcome-card" role="dialog" aria-modal="true" aria-labelledby="welcome-title"><div className="public-section-kicker">Uma carta para</div><h2 id="welcome-title">{invite.name}</h2><div className="public-welcome-rule" /><p>Será uma alegria celebrar 50 anos dessa história com vocês.</p><div className="public-welcome-actions"><button className="public-rsvp-button" onClick={() => { setWelcomeOpen(false); openRsvp(); }} data-testid="button-welcome-rsvp"><Heart size={14} /> Confirmar presença</button><button className="public-welcome-link" onClick={() => setWelcomeOpen(false)} data-testid="button-welcome-continue">Ver convite</button></div></div></div>}
-     {rsvpOpen && <div className="public-modal-backdrop" role="presentation" onMouseDown={(eventModal) => { if (eventModal.target === eventModal.currentTarget) setRsvpOpen(false); }}><div className="public-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title"><div className="public-modal-head"><div><div className="public-section-kicker">Sua resposta</div><h2 id="rsvp-title">Que bom ter você aqui.</h2></div><button className="public-modal-close" onClick={() => setRsvpOpen(false)} aria-label="Fechar confirmação" data-testid="button-close-rsvp"><X size={16} /></button></div><div className="public-modal-body"><div className="mb-5 rounded border border-[#cbbda9] bg-[#f7f0e5] p-4"><div className="label mb-2">Convite para</div><div className="font-semibold">{invite.name}</div>{hasCompanionFields && companionSlots.length > 0 && <div className="mt-3 space-y-2"><div className="label mb-1">Acompanhantes</div>{companionSlots.map((companion, index) => <div key={`summary-${index}`} className="flex items-center gap-2 text-sm text-[#536056]" data-testid={`text-companion-summary-${index}`}><span className="h-1.5 w-1.5 rounded-full bg-[#78342f]" />{companion.name ? <span>{companion.name} <span className="text-xs">({companion.relation || 'Acompanhante'})</span></span> : <span>Vaga de acompanhante</span>}</div>)}</div>}</div><div className="public-gift-note" data-testid="rsvp-gift-note"><div className="public-gift-note-label">Sugestão de presente</div><p>Se desejar nos presentear, a sugestão é contribuir via Pix para a nossa lua de mel.</p></div><div><label className={`public-choice ${choice === 'confirmed' ? 'selected' : ''}`}><input type="radio" name="rsvp-choice" checked={choice === 'confirmed'} onChange={() => setChoice('confirmed')} /><span><strong>{hasCompanionFields ? 'Sim, estaremos presentes' : 'Sim, estarei presente'}</strong><small className="block mt-1 text-[#536056]">Mal podemos esperar para celebrar juntos.</small></span></label><label className={`public-choice ${choice === 'declined' ? 'selected' : ''}`}><input type="radio" name="rsvp-choice" checked={choice === 'declined'} onChange={() => setChoice('declined')} /><span><strong>Não poderei comparecer</strong><small className="block mt-1 text-[#536056]">Agradeço muito o convite e desejo uma noite linda.</small></span></label></div>{choice === 'confirmed' && hasCompanionFields && <div className="mt-6"><label className="label">Quem estará com você?</label><p className="mb-3 text-xs text-[#536056]">Os nomes já definidos aparecem aqui. Preencha apenas as vagas ainda em aberto.</p>{companionSlots.map((companion, index) => <div key={`companion-field-${index}`} className="mb-3"><div className="mb-1 flex items-center justify-between gap-3 text-xs text-[#536056]"><span>{companion.name ? `${companion.name} · ${companion.relation || 'Acompanhante'}` : 'Acompanhante ainda não definido'}</span>{!companion.name && <span className="rounded-full bg-[#e3d6c4] px-2 py-1 text-[10px]">Vaga disponível</span>}</div>{companion.name ? <div className="rounded border border-[#cbbda9] bg-[#f7f0e5] px-3 py-2 text-sm text-[#536056]" data-testid={`text-defined-companion-${index}`}>{companion.name} <span className="text-xs">({companion.relation || 'Acompanhante'})</span></div> : <input id={`input-companion-name-${index}`} value={names[index] || ''} onChange={(eventInput) => setNames((current) => { const next = [...current]; next[index] = eventInput.target.value; return next; })} className="field" placeholder="Nome do acompanhante" aria-label="Nome do acompanhante" data-testid={`input-participant-${index}`} />}</div>)}</div>}<label className="label mt-5">Uma observação (opcional)<textarea className="field min-h-20" value={note} onChange={(eventInput) => setNote(eventInput.target.value)} data-testid="input-rsvp-note" /></label><button className="public-modal-submit" disabled={respond.isPending} onClick={submitResponse} data-testid="button-submit-rsvp">{respond.isPending ? <Loader2 className="mx-auto animate-spin" size={15} /> : <><Check size={15} className="inline mr-2" /> Confirmar resposta</>}</button></div></div></div>}
+     {welcomeOpen && <div className="public-modal-backdrop public-welcome-backdrop" role="presentation" onMouseDown={(eventModal) => { if (eventModal.target === eventModal.currentTarget) setWelcomeOpen(false); }}><div className="public-welcome-card" role="dialog" aria-modal="true" aria-labelledby="welcome-title"><div className="public-section-kicker">Uma carta para</div><h2 id="welcome-title">{invite.name}</h2><div className="public-welcome-rule" /><p>Será uma alegria celebrar 50 anos dessa história com vocês.</p><div className="public-welcome-actions">{!responseLocked && <button className="public-rsvp-button" onClick={() => { setWelcomeOpen(false); openRsvp(); }} data-testid="button-welcome-rsvp"><Heart size={14} /> {invite.status === 'pending' ? 'Confirmar presença' : 'Editar resposta'}</button>}{responseLocked && <div className="public-rsvp-status" data-testid="welcome-response-locked"><CheckCircle2 size={14} className="text-[#4a8a69]" /> Resposta já registrada</div>}<button className="public-welcome-link" onClick={() => setWelcomeOpen(false)} data-testid="button-welcome-continue">Ver convite</button></div></div></div>}
+     {rsvpOpen && <div className="public-modal-backdrop" role="presentation" onMouseDown={(eventModal) => { if (eventModal.target === eventModal.currentTarget) setRsvpOpen(false); }}><div className="public-modal" role="dialog" aria-modal="true" aria-labelledby="rsvp-title"><div className="public-modal-head"><div><div className="public-section-kicker">Sua resposta</div><h2 id="rsvp-title">Que bom ter você aqui.</h2></div><button className="public-modal-close" onClick={() => setRsvpOpen(false)} aria-label="Fechar confirmação" data-testid="button-close-rsvp"><X size={16} /></button></div><div className="public-modal-body"><div className="mb-5 rounded border border-[#cbbda9] bg-[#f7f0e5] p-4"><div className="label mb-2">Convite para</div><div className="font-semibold">{invite.name}</div>{hasCompanionFields && companionSlots.length > 0 && <div className="mt-3 space-y-2"><div className="label mb-1">Acompanhantes no convite</div>{companionSlots.map((companion, index) => <div key={`summary-${index}`} className="flex items-center gap-2 text-sm text-[#536056]" data-testid={`text-companion-summary-${index}`}><span className="h-1.5 w-1.5 rounded-full bg-[#78342f]" />{companion.name ? <span>{companion.name} <span className="text-xs">({companion.relation || 'Acompanhante'})</span></span> : <span>Vaga de acompanhante</span>}</div>)}</div>}</div><div className="public-gift-note" data-testid="rsvp-gift-note"><div className="public-gift-note-label">Sugestão de presente</div><p>Se desejar nos presentear, a sugestão é contribuir via Pix para a nossa lua de mel.</p></div><div><label className={`public-choice ${choice === 'confirmed' ? 'selected' : ''}`}><input type="radio" name="rsvp-choice" checked={choice === 'confirmed'} onChange={() => setChoice('confirmed')} /><span><strong>{hasCompanionFields ? 'Sim, estaremos presentes' : 'Sim, estarei presente'}</strong><small className="block mt-1 text-[#536056]">Mal podemos esperar para celebrar juntos.</small></span></label><label className={`public-choice ${choice === 'declined' ? 'selected' : ''}`}><input type="radio" name="rsvp-choice" checked={choice === 'declined'} onChange={() => setChoice('declined')} /><span><strong>Não poderei comparecer</strong><small className="block mt-1 text-[#536056]">Agradeço muito o convite e desejo uma noite linda.</small></span></label></div>{choice === 'confirmed' && hasCompanionFields && <CompanionResponses slots={companionSlots} names={names} attendance={companionAttendance} onNameChange={(index, value) => setNames((current) => current.map((name, nameIndex) => nameIndex === index ? value : name))} onAttendanceChange={(index, value) => setCompanionAttendance((current) => current.map((attending, attendanceIndex) => attendanceIndex === index ? value : attending))} />}<label className="label mt-5">Uma observação (opcional)<textarea className="field min-h-20" value={note} onChange={(eventInput) => setNote(eventInput.target.value)} data-testid="input-rsvp-note" /></label><button className="public-modal-submit" disabled={respond.isPending} onClick={submitResponse} data-testid="button-submit-rsvp">{respond.isPending ? <Loader2 className="mx-auto animate-spin" size={15} /> : <><Check size={15} className="inline mr-2" /> Confirmar resposta</>}</button></div></div></div>}
     <Flash message={flash} />
   </main>;
 }
@@ -343,6 +400,7 @@ function InvitesPage() {
       type: formData.type,
       maxPeople: Math.max(1, Math.min(20, formData.maxPeople)),
       allowCompanions: formData.allowCompanions,
+      allowResponseEdits: formData.allowResponseEdits,
       companions: formData.allowCompanions
         ? formData.companions.slice(0, Math.max(0, formData.maxPeople - 1)).map((companion) => ({
           name: companion.name.trim(),
@@ -377,6 +435,7 @@ function InviteModal({ value, busy, onClose, onSubmit }: { value?: Invite; busy:
   const [type, setType] = useState<InviteInputType>(value?.type || 'individual');
   const [maxPeople, setMaxPeople] = useState(value?.maxPeople || 1);
   const [allowCompanions, setAllowCompanions] = useState(Boolean(value?.allowCompanions));
+   const [allowResponseEdits, setAllowResponseEdits] = useState(Boolean(value?.allowResponseEdits));
   const [companions, setCompanions] = useState<CompanionDraft[]>(initialInviteCompanions(value));
   const [phone, setPhone] = useState(value?.phone || '');
   const [internalNotes, setInternalNotes] = useState(value?.internalNotes || '');
@@ -388,12 +447,13 @@ function InviteModal({ value, busy, onClose, onSubmit }: { value?: Invite; busy:
   const addCompanion = () => { if (companions.length < companionLimit) setCompanions((current) => [...current, { name: '', relation: 'Acompanhante' }]); };
   const submit = (eventForm: FormEvent<HTMLFormElement>) => {
     eventForm.preventDefault();
-    onSubmit({ name, type, maxPeople, allowCompanions: canManageCompanions, companions: canManageCompanions ? companions.slice(0, companionLimit) : [], phone, internalNotes });
+     onSubmit({ name, type, maxPeople, allowCompanions: canManageCompanions, allowResponseEdits, companions: canManageCompanions ? companions.slice(0, companionLimit) : [], phone, internalNotes });
   };
   return <div className="modal-backdrop"><div className="modal"><div className="p-6 border-b border-[hsl(var(--border))] flex justify-between"><div><div className="eyebrow">{value ? 'Editar convite' : 'Novo convite'}</div><h2 className="serif text-3xl mt-1">{value ? value.name : 'Adicionar convidado'}</h2></div><button className="btn btn-outline !p-2" onClick={onClose} data-testid="button-close-invite-modal"><X size={16} /></button></div><form className="p-6 space-y-5" onSubmit={submit}>
     <div><label className="label" htmlFor="input-invite-name">Nome do convidado principal</label><input id="input-invite-name" required minLength={2} value={name} onChange={(eventInput) => setName(eventInput.target.value)} className="field" placeholder="Ex. Marina e João" data-testid="input-invite-name" /></div>
     <div className="grid grid-cols-2 gap-3"><div><label className="label" htmlFor="select-invite-type">Tipo do convite</label><select id="select-invite-type" value={type} onChange={(eventInput) => setType(eventInput.target.value as InviteInputType)} className="field" data-testid="select-invite-type"><option value="individual">Individual</option><option value="couple">Casal</option><option value="family">Família</option><option value="group">Convidado + acompanhante</option></select></div><div><label className="label" htmlFor="input-invite-max">Máximo de pessoas</label><input id="input-invite-max" required type="number" min="1" max="20" value={maxPeople} onChange={(eventInput) => setMaxPeople(Math.max(1, Math.min(20, Number(eventInput.target.value) || 1)))} className="field" data-testid="input-invite-max" /></div></div>
     <div><label className="label" htmlFor="input-invite-phone">Telefone</label><input id="input-invite-phone" value={phone} onChange={(eventInput) => setPhone(eventInput.target.value)} className="field" placeholder="+55 (11) 99999-0000" data-testid="input-invite-phone" /></div>
+     <label className="flex gap-2 items-start text-sm"><input id="input-invite-response-edits" type="checkbox" checked={allowResponseEdits} onChange={(eventInput) => setAllowResponseEdits(eventInput.target.checked)} className="mt-0.5" data-testid="input-invite-response-edits" /><span><strong>Permitir edição da resposta</strong><span className="muted block text-xs mt-1">Se ativado, este convidado poderá alterar a confirmação depois de responder.</span></span></label>
     <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--secondary)/.28)] p-4"><label className="flex gap-2 items-start text-sm"><input id="input-invite-companions" type="checkbox" checked={allowCompanions} onChange={(eventInput) => setAllowCompanions(eventInput.target.checked)} className="mt-0.5" data-testid="input-invite-companions" /><span><strong>Acompanhantes permitidos</strong><span className="muted block text-xs mt-1">Defina os nomes conhecidos ou deixe uma vaga para o convidado completar.</span></span></label>{canManageCompanions && <div className="mt-4 space-y-3"><div className="flex items-center justify-between gap-3"><div><div className="label mb-0">Lista de acompanhantes</div><p className="muted text-xs">{companions.length} de {companionLimit} vagas configuradas</p></div><button type="button" className="btn btn-outline !py-2" onClick={addCompanion} disabled={companions.length >= companionLimit} data-testid="button-add-companion"><Plus size={14} /> Adicionar vaga</button></div>{companions.map((companion, index) => <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-3" key={`companion-${index}`} data-testid={`row-companion-${index}`}><div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end"><div><label className="label" htmlFor={`input-admin-companion-name-${index}`}>Nome do acompanhante {index + 1}</label><input id={`input-admin-companion-name-${index}`} value={companion.name} onChange={(eventInput) => updateCompanion(index, 'name', eventInput.target.value)} className="field" placeholder="Nome completo" data-testid={`input-admin-companion-name-${index}`} /></div><div><label className="label" htmlFor={`input-admin-companion-relation-${index}`}>Relação</label><input id={`input-admin-companion-relation-${index}`} value={companion.relation} onChange={(eventInput) => updateCompanion(index, 'relation', eventInput.target.value)} className="field" placeholder="Ex. esposa" data-testid={`input-admin-companion-relation-${index}`} /></div><button type="button" className="btn btn-danger !p-2.5" onClick={() => setCompanions((current) => current.filter((_, companionIndex) => companionIndex !== index))} aria-label={`Remover acompanhante ${index + 1}`} title="Remover vaga" data-testid={`button-remove-companion-${index}`}><Trash2 size={14} /></button></div><button type="button" className="mt-3 text-xs font-semibold text-[hsl(var(--primary))] underline underline-offset-2" onClick={() => setUndefinedCompanion(index)} data-testid={`button-mark-companion-undefined-${index}`}>Marcar como acompanhante ainda não definido</button>{!companion.name && <div className="mt-2 text-[11px] text-[hsl(var(--muted-foreground))]">Será salvo como uma vaga com relação “Acompanhante”.</div>}</div>)}</div>}{!canManageCompanions && allowCompanions && type === 'individual' && <p className="muted mt-3 text-xs">Convites individuais não exibem campos de acompanhantes.</p>}</div>
     <div><label className="label" htmlFor="input-invite-internal-notes">Observações internas do administrador</label><textarea id="input-invite-internal-notes" value={internalNotes} onChange={(eventInput) => setInternalNotes(eventInput.target.value)} className="field min-h-24" placeholder="Informações que só a organização deve ver..." data-testid="input-invite-internal-notes" /></div>
     <button className="btn btn-primary w-full mt-2" disabled={busy || !name.trim()} data-testid="button-submit-invite">{busy ? <Loader2 className="animate-spin" size={15} /> : <Check size={15} />} {value ? 'Salvar alterações' : 'Criar convite'}</button></form></div></div>;

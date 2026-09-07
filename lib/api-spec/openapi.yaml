@@ -170,6 +170,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Invite"
+        "409":
+          description: Invitation response is already locked
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error: { type: string }
   /dashboard/summary:
     get:
       operationId: getDashboardSummary
@@ -371,7 +380,7 @@ components:
         relation: { type: string }
     Invite:
       type: object
-      required: [token, name, type, maxPeople, status, participants, companions, internalNotes]
+      required: [token, name, type, maxPeople, status, participants, companions, internalNotes, allowResponseEdits]
       properties:
         token: { type: string }
         name: { type: string }
@@ -380,6 +389,7 @@ components:
           enum: [individual, couple, family, group]
         maxPeople: { type: integer }
         allowCompanions: { type: boolean }
+        allowResponseEdits: { type: boolean }
         companionTypes:
           type: array
           items: { type: string }
@@ -406,6 +416,7 @@ components:
           enum: [individual, couple, family, group]
         maxPeople: { type: integer, minimum: 1, maximum: 20 }
         allowCompanions: { type: boolean }
+        allowResponseEdits: { type: boolean }
         companionTypes:
           type: array
           items: { type: string }
@@ -420,6 +431,7 @@ components:
         name: { type: string, minLength: 2 }
         maxPeople: { type: integer, minimum: 1, maximum: 20 }
         allowCompanions: { type: boolean }
+        allowResponseEdits: { type: boolean }
         companionTypes:
           type: array
           items: { type: string }

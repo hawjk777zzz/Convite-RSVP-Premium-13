@@ -25,6 +25,7 @@ export const invitesTable = pgTable("invites", {
   type: text("type").notNull(),
   maxPeople: integer("max_people").notNull(),
   allowCompanions: boolean("allow_companions").notNull().default(false),
+  allowResponseEdits: boolean("allow_response_edits").notNull().default(false),
   companionTypes: text("companion_types").array().notNull().default([]),
   companions: jsonb("companions").notNull().default([]),
   phone: text("phone"),

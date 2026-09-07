@@ -33,7 +33,8 @@ import type {
   InviteResponseInput,
   InviteUpdate,
   MessageInput,
-  MessageUpdate
+  MessageUpdate,
+  RespondToInvite409
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -761,7 +762,7 @@ export const respondToInvite = async (token: string,
 
 
 
-export const getRespondToInviteMutationOptions = <TError = ErrorType<unknown>,
+export const getRespondToInviteMutationOptions = <TError = ErrorType<RespondToInvite409>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToInvite>>, TError,{token: string;data: BodyType<InviteResponseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof respondToInvite>>, TError,{token: string;data: BodyType<InviteResponseInput>}, TContext> => {
 
@@ -790,12 +791,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type RespondToInviteMutationResult = NonNullable<Awaited<ReturnType<typeof respondToInvite>>>
     export type RespondToInviteMutationBody = BodyType<InviteResponseInput>
-    export type RespondToInviteMutationError = ErrorType<unknown>
+    export type RespondToInviteMutationError = ErrorType<RespondToInvite409>
 
     /**
  * @summary Confirm or decline an invitation
  */
-export const useRespondToInvite = <TError = ErrorType<unknown>,
+export const useRespondToInvite = <TError = ErrorType<RespondToInvite409>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToInvite>>, TError,{token: string;data: BodyType<InviteResponseInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof respondToInvite>>,

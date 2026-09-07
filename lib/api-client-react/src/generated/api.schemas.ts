@@ -98,6 +98,7 @@ export interface Invite {
   type: InviteType;
   maxPeople: number;
   allowCompanions?: boolean;
+  allowResponseEdits: boolean;
   companionTypes?: string[];
   companions: Companion[];
   /** @nullable */
@@ -131,6 +132,7 @@ export interface InviteInput {
      */
   maxPeople: number;
   allowCompanions: boolean;
+  allowResponseEdits?: boolean;
   companionTypes?: string[];
   companions?: Companion[];
   phone?: string;
@@ -146,6 +148,7 @@ export interface InviteUpdate {
      */
   maxPeople?: number;
   allowCompanions?: boolean;
+  allowResponseEdits?: boolean;
   companionTypes?: string[];
   companions?: Companion[];
   phone?: string;
@@ -238,4 +241,8 @@ export const MessageUpdateStatus = {
 export interface MessageUpdate {
   status: MessageUpdateStatus;
 }
+
+export type RespondToInvite409 = {
+  error: string;
+};
 

@@ -16,6 +16,7 @@ export interface Invite {
   type: InviteType;
   maxPeople: number;
   allowCompanions?: boolean;
+  allowResponseEdits: boolean;
   companionTypes?: string[];
   companions: Companion[];
   /** @nullable */

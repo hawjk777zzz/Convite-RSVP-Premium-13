@@ -132,6 +132,7 @@ export const ListInvitesResponseItem = zod.object({
   "type": zod.enum(['individual', 'couple', 'family', 'group']),
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
+  "allowResponseEdits": zod.boolean(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),
@@ -164,6 +165,7 @@ export const CreateInviteBody = zod.object({
   "type": zod.enum(['individual', 'couple', 'family', 'group']),
   "maxPeople": zod.number().int().min(1).max(createInviteBodyMaxPeopleMax),
   "allowCompanions": zod.boolean(),
+  "allowResponseEdits": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),
@@ -179,6 +181,7 @@ export const CreateInviteResponse = zod.object({
   "type": zod.enum(['individual', 'couple', 'family', 'group']),
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
+  "allowResponseEdits": zod.boolean(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),
@@ -213,6 +216,7 @@ export const GetInviteResponse = zod.object({
   "type": zod.enum(['individual', 'couple', 'family', 'group']),
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
+  "allowResponseEdits": zod.boolean(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),
@@ -251,6 +255,7 @@ export const UpdateInviteBody = zod.object({
   "name": zod.string().min(updateInviteBodyNameMin).optional(),
   "maxPeople": zod.number().int().min(1).max(updateInviteBodyMaxPeopleMax).optional(),
   "allowCompanions": zod.boolean().optional(),
+  "allowResponseEdits": zod.boolean().optional(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),
@@ -266,6 +271,7 @@ export const UpdateInviteResponse = zod.object({
   "type": zod.enum(['individual', 'couple', 'family', 'group']),
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
+  "allowResponseEdits": zod.boolean(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),
@@ -323,6 +329,7 @@ export const RespondToInviteResponse = zod.object({
   "type": zod.enum(['individual', 'couple', 'family', 'group']),
   "maxPeople": zod.number().int(),
   "allowCompanions": zod.boolean().optional(),
+  "allowResponseEdits": zod.boolean(),
   "companionTypes": zod.array(zod.string()).optional(),
   "companions": zod.array(zod.object({
   "name": zod.string(),

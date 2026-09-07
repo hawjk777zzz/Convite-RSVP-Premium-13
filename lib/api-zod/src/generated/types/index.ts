@@ -9,6 +9,7 @@
 export * from './checkin';
 export * from './checkinInput';
 export * from './companion';
+export * from './confirmedParticipants';
 export * from './couple';
 export * from './dashboardSummary';
 export * from './dashboardSummaryConfirmationTrendItem';

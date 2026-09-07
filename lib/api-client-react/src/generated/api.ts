@@ -22,6 +22,7 @@ import type {
 import type {
   Checkin,
   CheckinInput,
+  ConfirmedParticipants,
   DashboardSummary,
   EventContent,
   EventUpdate,
@@ -287,6 +288,83 @@ export const useUpdateEvent = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUpdateEventMutationOptions(options));
     }
+
+export const getGetConfirmedParticipantsUrl = () => {
+
+
+
+
+  return `/api/event/confirmed-participants`
+}
+
+/**
+ * @summary Get participants from confirmed invitations
+ */
+export const getConfirmedParticipants = async ( options?: Parameters<typeof customFetch>[1]): Promise<ConfirmedParticipants> => {
+
+  return customFetch<ConfirmedParticipants>(getGetConfirmedParticipantsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetConfirmedParticipantsQueryKey = () => {
+    return [
+    `/api/event/confirmed-participants`
+    ] as const;
+    }
+
+
+export const getGetConfirmedParticipantsQueryOptions = <TData = Awaited<ReturnType<typeof getConfirmedParticipants>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getConfirmedParticipants>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConfirmedParticipantsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConfirmedParticipants>>> = ({ signal }) => getConfirmedParticipants({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConfirmedParticipants>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetConfirmedParticipantsQueryResult = NonNullable<Awaited<ReturnType<typeof getConfirmedParticipants>>>
+export type GetConfirmedParticipantsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get participants from confirmed invitations
+ */
+
+export function useGetConfirmedParticipants<TData = Awaited<ReturnType<typeof getConfirmedParticipants>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getConfirmedParticipants>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetConfirmedParticipantsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListInvitesUrl = () => {
 

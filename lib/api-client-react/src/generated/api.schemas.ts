@@ -44,6 +44,15 @@ export interface EventContent {
   gallery: GalleryImage[];
 }
 
+export interface Participant {
+  name: string;
+  kind: string;
+}
+
+export interface ConfirmedParticipants {
+  participants: Participant[];
+}
+
 export interface EventUpdate {
   couple: Couple;
   eventDate: string;
@@ -57,11 +66,6 @@ export interface EventUpdate {
   dressCode?: string | null;
   timeline: TimelineItem[];
   gallery: GalleryImage[];
-}
-
-export interface Participant {
-  name: string;
-  kind: string;
 }
 
 export interface Companion {

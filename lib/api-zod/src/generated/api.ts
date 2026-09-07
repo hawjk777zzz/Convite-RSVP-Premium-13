@@ -113,6 +113,17 @@ export const UpdateEventResponse = zod.object({
 
 
 /**
+ * @summary Get participants from confirmed invitations
+ */
+export const GetConfirmedParticipantsResponse = zod.object({
+  "participants": zod.array(zod.object({
+  "name": zod.string(),
+  "kind": zod.string()
+}))
+})
+
+
+/**
  * @summary List invitations for the organizer
  */
 export const ListInvitesResponseItem = zod.object({

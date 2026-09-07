@@ -40,27 +40,18 @@ const couplePortrait = "/images/antonio-aparecida.jpg";
 const galleryImages = [
   {
     id: 1,
-    imageUrl:
-      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85",
-    alt: "Casal caminhando ao pôr do sol",
+    imageUrl: "/images/antonio-aparecida-praia-1.jpg",
+    alt: "Antônio e Aparecida caminhando de mãos dadas na praia",
   },
   {
     id: 2,
-    imageUrl:
-      "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=85",
-    alt: "Mesa preparada para uma celebração",
+    imageUrl: "/images/antonio-aparecida-praia-2.jpg",
+    alt: "Antônio e Aparecida juntos à beira-mar",
   },
   {
     id: 3,
-    imageUrl:
-      "https://images.unsplash.com/photo-1519741347686-c1e0aadf4611?auto=format&fit=crop&w=1200&q=85",
-    alt: "Detalhe de mãos entrelaçadas",
-  },
-  {
-    id: 4,
-    imageUrl:
-      "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&w=1200&q=85",
-    alt: "Flores claras em uma mesa",
+    imageUrl: "/images/antonio-aparecida-praia-3.jpg",
+    alt: "Antônio e Aparecida sorrindo no píer",
   },
 ];
 
@@ -159,12 +150,16 @@ async function ensureSeeded() {
 
   const [currentEvent] = await db.select().from(eventSettingsTable).limit(1);
   const currentCouple = currentEvent?.couple as { name1?: string; name2?: string; yearsTogether?: number; photoUrl?: string } | undefined;
+  const currentGallery = currentEvent?.gallery as Array<{ imageUrl?: string }> | undefined;
   if (currentEvent && currentCouple?.name1 === "Helena" && currentCouple?.name2 === "Marcelo" && currentEvent.eventDate === "2026-11-15") {
     await db.update(eventSettingsTable).set({
       couple: { ...(currentEvent.couple as Record<string, unknown>), name1: "Antônio", name2: "Aparecida", photoUrl: couplePortrait },
       eventDate: "2026-10-17",
       eventTime: "19:00",
     }).where(eq(eventSettingsTable.id, currentEvent.id));
+  }
+  if (currentEvent && currentGallery?.[0]?.imageUrl !== galleryImages[0].imageUrl) {
+    await db.update(eventSettingsTable).set({ gallery: galleryImages }).where(eq(eventSettingsTable.id, currentEvent.id));
   }
   if (currentEvent && currentCouple?.yearsTogether === 28) {
     await db.update(eventSettingsTable).set({
@@ -228,6 +223,19 @@ router.get("/event", async (_req, res, next) => {
       timeline: event.timeline,
       gallery: event.gallery,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/event/confirmed-participants", async (_req, res, next) => {
+  try {
+    await ensureSeeded();
+    const invites = await db.select().from(invitesTable);
+    const participants = invites
+      .filter((invite) => invite.status === "confirmed")
+      .flatMap((invite) => (Array.isArray(invite.participants) ? invite.participants : []));
+    res.json({ participants });
   } catch (error) {
     next(error);
   }

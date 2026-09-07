@@ -63,6 +63,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventContent"
+  /event/confirmed-participants:
+    get:
+      operationId: getConfirmedParticipants
+      tags: [event]
+      summary: Get participants from confirmed invitations
+      responses:
+        "200":
+          description: Confirmed participants
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfirmedParticipants"
   /invites:
     get:
       operationId: listInvites
@@ -319,6 +331,13 @@ components:
         gallery:
           type: array
           items: { $ref: "#/components/schemas/GalleryImage" }
+    ConfirmedParticipants:
+      type: object
+      required: [participants]
+      properties:
+        participants:
+          type: array
+          items: { $ref: "#/components/schemas/Participant" }
     EventUpdate:
       type: object
       required: [couple, eventDate, eventTime, venue, address, heroImage, mapUrl, message, timeline, gallery]

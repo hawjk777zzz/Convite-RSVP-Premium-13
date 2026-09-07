@@ -34,9 +34,8 @@ const requireOrganizer: RequestHandler = (req, res, next) => {
   next();
 };
 
-const heroImage =
-  "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1800&q=85";
 const couplePortrait = "/images/antonio-aparecida.jpg";
+const heroImage = couplePortrait;
 const galleryImages = [
   {
     id: 1,
@@ -160,6 +159,9 @@ async function ensureSeeded() {
   }
   if (currentEvent && currentGallery?.[0]?.imageUrl !== galleryImages[0].imageUrl) {
     await db.update(eventSettingsTable).set({ gallery: galleryImages }).where(eq(eventSettingsTable.id, currentEvent.id));
+  }
+  if (currentEvent && currentEvent.heroImage !== heroImage) {
+    await db.update(eventSettingsTable).set({ heroImage }).where(eq(eventSettingsTable.id, currentEvent.id));
   }
   if (currentEvent && currentCouple?.yearsTogether === 28) {
     await db.update(eventSettingsTable).set({

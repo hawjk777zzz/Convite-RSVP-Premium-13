@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "artifacts/convite-rsvp/dist/public",
   "rewrites": [
     {
       "source": "/api/(.*)",

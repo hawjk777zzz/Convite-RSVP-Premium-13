@@ -36,6 +36,8 @@ const requireOrganizer: RequestHandler = (req, res, next) => {
 
 const couplePortrait = "/images/antonio-aparecida.jpg";
 const heroImage = couplePortrait;
+const eventAddress = "R. Doze, 15 - Morada do Ouro II, Cuiabá - MT, 78053-731";
+const eventMapUrl = "https://maps.app.goo.gl/5FZ8EEPRtXbrAqBv7";
 const galleryImages = [
   {
     id: 1,
@@ -137,9 +139,9 @@ async function ensureSeeded() {
       eventDate: "2026-10-17",
       eventTime: "19:00",
       venue: "Casa das Palmeiras",
-      address: "Alameda das Acácias, 240 — São Paulo, SP",
+      address: eventAddress,
       heroImage,
-      mapUrl: "https://maps.google.com/?q=Casa+das+Palmeiras+Sao+Paulo",
+      mapUrl: eventMapUrl,
       message: goldenAnniversaryMessage,
       dressCode: "Traje social",
       timeline: goldenAnniversaryTimeline,
@@ -162,6 +164,9 @@ async function ensureSeeded() {
   }
   if (currentEvent && currentEvent.heroImage !== heroImage) {
     await db.update(eventSettingsTable).set({ heroImage }).where(eq(eventSettingsTable.id, currentEvent.id));
+  }
+  if (currentEvent && (currentEvent.address !== eventAddress || currentEvent.mapUrl !== eventMapUrl)) {
+    await db.update(eventSettingsTable).set({ address: eventAddress, mapUrl: eventMapUrl }).where(eq(eventSettingsTable.id, currentEvent.id));
   }
   if (currentEvent && currentCouple?.yearsTogether === 28) {
     await db.update(eventSettingsTable).set({

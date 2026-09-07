@@ -1,3 +1,4 @@
+```js
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -90,13 +91,13 @@ async function buildAll() {
       "wrangler",
       "zeromq",
       "zeromq-prebuilt",
-      "electron"
+      "electron",
     ],
 
     plugins: [
       esbuildPluginPino({
-        transports: ["pino-pretty"]
-      })
+        transports: ["pino-pretty"],
+      }),
     ],
 
     banner: {
@@ -107,30 +108,33 @@ import __bannerUrl from 'node:url';
 globalThis.require = __bannerCrReq(import.meta.url);
 globalThis.__filename = __bannerUrl.fileURLToPath(import.meta.url);
 globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
-`
-    }
+`,
+    },
   };
 
   // Servidor normal do Replit
   await esbuild({
     ...commonOptions,
     entryPoints: [
-      path.resolve(artifactDir, "src/index.ts")
+      path.resolve(artifactDir, "src/index.ts"),
     ],
     outdir: distDir,
     outExtension: {
-      ".js": ".mjs"
-    }
+      ".js": ".mjs",
+    },
   });
 
-  // Bundle específico para Vercel.
-  // Importa app.ts, mas NÃO executa app.listen().
+  // Bundle específico para Vercel
+  // Não usa outfile porque o plugin do Pino pode gerar múltiplos arquivos.
   await esbuild({
     ...commonOptions,
     entryPoints: [
-      path.resolve(artifactDir, "src/vercel.ts")
+      path.resolve(artifactDir, "src/vercel.ts"),
     ],
-    outfile: path.resolve(distDir, "vercel.mjs")
+    outdir: distDir,
+    outExtension: {
+      ".js": ".mjs",
+    },
   });
 }
 
@@ -138,3 +142,4 @@ buildAll().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+```
